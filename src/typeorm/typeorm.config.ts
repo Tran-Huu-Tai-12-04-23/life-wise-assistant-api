@@ -1,10 +1,12 @@
 // src/database/dataSource.ts
 import { resolve } from 'path';
 import { config } from 'dotenv';
+import { DataSource } from 'typeorm';
 
 config();
 
-export const dataSource = {
+export const dataSource = new DataSource({
+  type: 'mysql',
   host: process.env.DB_HOST,
   port: +(process.env.DB_PORT as string),
   username: process.env.DB_USERNAME,
@@ -15,4 +17,4 @@ export const dataSource = {
   migrations: [resolve(__dirname, '../migrations/*{.ts,.js}')],
   connectTimeout: 5000000,
   synchronize: true,
-};
+});
