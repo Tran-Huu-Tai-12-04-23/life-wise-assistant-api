@@ -56,9 +56,6 @@ jobs:
           # Pull the latest image
           docker pull $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }}
 
-          # Run the container only if the conditions are met (container and image removed)
-          if ! docker ps -a --format '{{.Names}}' | grep -q "^$IMAGE_NAME$"; then
-              docker run -d -p 3000:3000 --name $IMAGE_NAME $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }}
-          fi
+          
           EOF
 
