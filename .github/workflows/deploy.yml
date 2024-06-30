@@ -42,19 +42,7 @@ jobs:
           TAG_NAME: ${{ secrets.TAG_NAME }}
         run: |
           sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no -p 24700 $SSH_USERNAME@$SSH_HOST << EOF
-
           mkdir -p /container && cd /container
-
           docker pull $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME
-
-          docker images | grep your-project | awk '{print $3}' > image_list.txt
-
-          while IFS= read -r image; do
-            if [[ $image != "$DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME" ]]; then
-              docker rmi $image
-            fi
-          done < image_list.txt
-
-          docker run -d -p 3000:3000 $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME
-
+          docker images | grep -q "${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$TAG_NAME" && docker restart "${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$TAG_NAME" || docker run -d -p 3000:3000 "${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$TAG_NAME"
           EOF
