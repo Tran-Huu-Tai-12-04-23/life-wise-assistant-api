@@ -43,9 +43,22 @@ jobs:
         run: |
           sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no -p 24700 $SSH_USERNAME@$SSH_HOST << EOF
           mkdir -p /container && cd /container
-          docker stop 12042322
-          docker rm -f 12042322
-          docker images --filter=reference=$DOCKER_USERNAME/$IMAGE_NAME --quiet | xargs -r docker rmi -f
+          # Check if container with the same name exists and stop/remove it
+          if docker ps -aq --filter name=$IMAGE_NAME | grep -q .; then
+              docker stop $IMAGE_NAME || true
+              docker rm -f $IMAGE_NAME || true
+          fi
+          # Check if image with the same reference exists and remove it
+          if docker images --filter=reference=$DOCKER_USERNAME/$IMAGE_NAME --quiet | grep -q .; then
+              docker images --filter=reference=$DOCKER_USERNAME/$IMAGE_NAME --quiet | xargs -r docker rmi -f
+          fi
+
+          # Pull the latest image
           docker pull $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }}
-          docker run --rm -d -p 3000:3000 --name $IMAGE_NAME $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }} 12042322
+
+          # Run the container only if the conditions are met (container and image removed)
+          if ! docker ps -a --format '{{.Names}}' | grep -q "^$IMAGE_NAME$"; then
+              docker run -d -p 3000:3000 --name $IMAGE_NAME $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }}
+          fi
           EOF
+
