@@ -44,5 +44,7 @@ jobs:
           sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no -p 24700 $SSH_USERNAME@$SSH_HOST << EOF
           mkdir -p /container && cd /container
           docker pull $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME
-          docker images | grep -q "${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$TAG_NAME" && docker restart "${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$TAG_NAME" || docker run -d -p 3000:3000 "${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$TAG_NAME"
+          docker stop $(docker ps -q --filter name=$DOCKER_USERNAME/$IMAGE_NAME)
+          docker rm $(docker ps -aq --filter name=$DOCKER_USERNAME/$IMAGE_NAME)
+          docker run -d -p 3000:3000 "${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:$TAG_NAME"
           EOF
