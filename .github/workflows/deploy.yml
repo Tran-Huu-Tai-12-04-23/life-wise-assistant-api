@@ -47,4 +47,7 @@ jobs:
               docker stop $IMAGE_NAME || true
               docker rm -f $IMAGE_NAME || true
           fi
+          if docker images --filter=reference=$DOCKER_USERNAME/$IMAGE_NAME --quiet | grep -q .; then
+              docker images --filter=reference=$DOCKER_USERNAME/$IMAGE_NAME --quiet | xargs -r docker rmi -f
+          fi
           EOF
