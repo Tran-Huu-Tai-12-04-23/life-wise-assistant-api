@@ -41,13 +41,15 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           TAG_NAME: ${{ secrets.TAG_NAME }}
         run: |
-          sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no -p 24700 $SSH_USERNAME@$SSH_HOST << EOF
-          mkdir -p /container && cd /container
-          docker stop --time=0 $(docker ps -aq --filter name=life-manager-api) && docker rm $(docker ps -aq --filter name=life-manager-api)
-          
-          docker images --filter=reference=huutaidev/life-manager-api --quiet | xargs docker rmi
-          
-          docker pull $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME
-         
-          docker run -d -p 3000:3000 --name $IMAGE_NAME $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME
+          sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no -p 24700 $SSH_USERNAME@$SSH_HOST << 'EOF'
+            mkdir -p /container && cd /container
+            # Stop and remove existing container (if any)
+            docker stop --time=0 $(docker ps -aq --filter name=$IMAGE_NAME) || true
+            docker rm -f $(docker ps -aq --filter name=$IMAGE_NAME) || true
+            # Remove existing image (if any)
+            docker images --filter=reference=$DOCKER_USERNAME/$IMAGE_NAME --quiet | xargs -r docker rmi -f
+            # Pull the latest image
+            docker pull $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME
+            # Run the container
+            docker run -d -p 3000:3000 --name $IMAGE_NAME $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME
           EOF
