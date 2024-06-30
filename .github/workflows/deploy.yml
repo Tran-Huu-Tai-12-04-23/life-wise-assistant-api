@@ -43,10 +43,9 @@ jobs:
         run: |
           sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no -p 24700 $SSH_USERNAME@$SSH_HOST << EOF
           mkdir -p /container && cd /container
-          docker stop ${{ github.sha }}
-          docker rm -f ${{ github.sha }}
+          docker stop 12042322
+          docker rm -f 12042322
           docker images --filter=reference=$DOCKER_USERNAME/$IMAGE_NAME --quiet | xargs -r docker rmi -f
           docker pull $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }}
-          docker run --rm -d -p 3000:3000 --name $IMAGE_NAME $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }} ${{ github.sha }}
+          docker run --rm -d -p 3000:3000 --name $IMAGE_NAME $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }} 12042322
           EOF
-
