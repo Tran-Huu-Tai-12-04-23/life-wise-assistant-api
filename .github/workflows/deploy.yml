@@ -35,12 +35,13 @@ jobs:
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
-          SSH_KEY: ${{ secrets.SSH_KEY }}  # Assuming SSH key configured
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_PASS: ${{ secrets.SSH_PASS }}
           IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           TAG_NAME: ${{ secrets.TAG_NAME }}
         run: |
-          ssh -o StrictHostKeyChecking=no -p 24700 $SSH_USERNAME@$SSH_HOST << EOF
+          sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no -p 24700 $SSH_USERNAME@$SSH_HOST << EOF
           mkdir -p /container && cd /container
 
           # Remove existing image (if any)
