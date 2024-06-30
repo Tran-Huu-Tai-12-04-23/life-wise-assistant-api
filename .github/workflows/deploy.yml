@@ -38,20 +38,4 @@ jobs:
           SSH_KEY: ${{ secrets.SSH_KEY }}
           SSH_PASS: ${{ secrets.SSH_PASS }}
         run: |
-          sshpass -p $SSH_PASS ssh -p 24700 $SSH_USERNAME@$SSH_HOST << EOF
-
-          mkdir -p /container && cd /container
-
-          docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }}
-
-          docker images | grep your-project | awk '{print $3}' > image_list.txt
-
-          while IFS= read -r image; do
-            if [[ $image != "${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }}" ]]; then
-              docker rmi $image
-            fi
-          done < image_list.txt
-
-          docker run -d -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }}
-
-          EOF
+          sshpass -p $SSH_PASS ssh -p 24700 $SSH_USERNAME@$SSH_HOST 
