@@ -23,13 +23,13 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build Docker image
-        run: docker build -t ${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }} .
+        run: docker build -t ${{ secrets.IMAGE_NAME }}:${{ github.sha }} .
 
-      - name: Add tag docker image (optional)
-        run: docker tag ${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }} ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }}_${{ github.sha }}
+      - name: Add tag to Docker image
+        run: docker tag ${{ secrets.IMAGE_NAME }}:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}:${{ github.sha }}
 
-      - name: Push Docker image to docker hub (optional)
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }}_${{ github.sha }}
+      - name: Push Docker image to Docker Hub (optional)
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Deploy to Server (using SSH and Docker)
         env:
@@ -39,21 +39,17 @@ jobs:
           SSH_PASS: ${{ secrets.SSH_PASS }}
           IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          TAG_NAME: ${{ secrets.TAG_NAME }}
+          TAG_NAME: ${{ github.sha }}
         run: |
-          sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no -p 24700 $SSH_USERNAME@$SSH_HOST << EOF
-          mkdir -p /container && cd /container
-          if docker ps -aq --filter name=$IMAGE_NAME | grep -q .; then
+          sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no -p 24700 $SSH_USERNAME@$SSH_HOST << 'EOF'
+            mkdir -p /container && cd /container
+            if docker ps -a --format '{{.Names}}' | grep -q "^$IMAGE_NAME$"; then
               docker stop $IMAGE_NAME || true
               docker rm -f $IMAGE_NAME || true
-          fi
-          if docker images --filter=reference=$DOCKER_USERNAME/$IMAGE_NAME --quiet | grep -q .; then
-              docker images --filter=reference=$DOCKER_USERNAME/$IMAGE_NAME --quiet | xargs -r docker rmi -f
-          fi
-          EOF
-          docker pull $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }}
-          EOF
-          if ! docker ps -a --format '{{.Names}}' | grep -q "^$IMAGE_NAME$"; then
-              docker run -d -p 3000:3000 --name $IMAGE_NAME $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }}
-          fi
+            fi
+            if docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^$DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME$"; then
+              docker images --filter=reference=$DOCKER_USERNAME/$IMAGE_NAME --format '{{.ID}}' | xargs -r docker rmi -f
+            fi
+            docker pull $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME
+            docker run -d -p 3000:3000 --name $IMAGE_NAME $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME
           EOF
