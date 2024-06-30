@@ -50,8 +50,7 @@ jobs:
             if docker images --filter=reference=$DOCKER_USERNAME/$IMAGE_NAME --quiet | grep -q .; then
                 docker images --filter=reference=$DOCKER_USERNAME/$IMAGE_NAME --quiet | xargs -r docker rmi -f
             fi
-            echo $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }}
-            docker pull $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }}
+                docker pull $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }}
             if ! docker ps -a --format '{{.Names}}' | grep -q "^$IMAGE_NAME$"; then
                 docker run -d -p 3000:3000 --name $IMAGE_NAME $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }}
             fi
