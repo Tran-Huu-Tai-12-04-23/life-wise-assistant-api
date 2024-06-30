@@ -5,7 +5,7 @@ import { coreHelper } from './helpers';
 export class AppService {
   /** check status of server */
   healthCheck() {
-    return 'This server is healthy.';
+    return 'This server is healthy. - update v1 deploy CI/CD';
   }
 
   /** check time by timezone of server */
