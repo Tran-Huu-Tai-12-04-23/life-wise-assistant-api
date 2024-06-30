@@ -23,13 +23,13 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build Docker image
-        run: docker build -t ${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }}_${{ github.sha }} .
+        run: docker build -t ${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }} .
 
       - name: Add tag docker image (optional)
-        run: docker tag ${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }}_${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }}_${{ github.sha }}
+        run: docker tag ${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }} ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }}
 
       - name: Push Docker image to docker hub (optional)
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }}_${{ github.sha }}
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }}
 
       - name: Deploy to Server (using SSH and Docker)
         env:
@@ -41,9 +41,7 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           TAG_NAME: ${{ secrets.TAG_NAME }}
         run: |
-          sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no -p 24700 $SSH_USERNAME@$SSH_HOST << 'EOF'
-            mkdir -p /container && cd /container
-            docker pull $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }}
-            # Run the container
-            docker run -d -p 3000:3000 --name $IMAGE_NAME $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }}
+          sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no -p 24700 $SSH_USERNAME@$SSH_HOST << EOF
+          mkdir -p /container && cd /container
+          docker run -d -p 3000:3000 --name $IMAGE_NAME $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }}
           EOF
