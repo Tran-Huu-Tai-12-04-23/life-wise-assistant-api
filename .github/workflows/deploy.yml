@@ -39,16 +39,21 @@ jobs:
           SSH_PASS: ${{ secrets.SSH_PASS }}
           IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          TAG_NAME: ${{ secrets.TAG_NAME }}_${{ github.sha }}
+          TAG_NAME: ${{ secrets.TAG_NAME }}
         run: |
           sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no -p 24700 $SSH_USERNAME@$SSH_HOST << 'EOF'
             mkdir -p /container && cd /container
-            if docker ps -a --format '{{.Names}}' | grep -q "^$IMAGE_NAME$"; then
-              docker stop $IMAGE_NAME || true
-              docker rm -f $IMAGE_NAME || true
+            if docker ps -aq --filter name=$IMAGE_NAME | grep -q .; then
+                docker stop $IMAGE_NAME || true
+                docker rm -f $IMAGE_NAME || true
             fi
-            if docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^$DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME$"; then
-              docker images --filter=reference=$DOCKER_USERNAME/$IMAGE_NAME --format '{{.ID}}' | xargs -r docker rmi -f
+            if docker images --filter=reference=$DOCKER_USERNAME/$IMAGE_NAME --quiet | grep -q .; then
+                docker images --filter=reference=$DOCKER_USERNAME/$IMAGE_NAME --quiet | xargs -r docker rmi -f
             fi
-            docker pull $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME
+            echo $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }}
+            docker pull $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }}
+            if ! docker ps -a --format '{{.Names}}' | grep -q "^$IMAGE_NAME$"; then
+                docker run -d -p 3000:3000 --name $IMAGE_NAME $DOCKER_USERNAME/$IMAGE_NAME:$TAG_NAME_${{ github.sha }}
+            fi
           EOF
+
