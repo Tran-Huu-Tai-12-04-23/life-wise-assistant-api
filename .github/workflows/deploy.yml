@@ -50,7 +50,7 @@ jobs:
           docker images | grep your-project | awk '{print $3}' > image_list.txt
 
           while IFS= read -r image; do
-            if [[ $image != "$DOCKER_USERNAME/$IMAGE_NAME:secrets.TAG_NAME" ]]; then
+            if [[ $image != "$DOCKER_USERNAME/$IMAGE_NAME:TAG_NAME" ]]; then
               docker rmi $image
             fi
           done < image_list.txt
