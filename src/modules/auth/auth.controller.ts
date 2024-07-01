@@ -1,7 +1,7 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { SignInDTO, SignUpDTO } from './dto';
+import { RefreshTokenDTO, SignInDTO, SignUpDTO } from './dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -27,7 +27,7 @@ export class AuthController {
     summary: 'Refresh ac token when ac token expired',
   })
   @Post('refresh-token')
-  async refreshToken(@Body() data: { refreshToken: string }) {
+  async refreshToken(@Body() data: RefreshTokenDTO) {
     return await this.service.refreshToken(data);
   }
 }

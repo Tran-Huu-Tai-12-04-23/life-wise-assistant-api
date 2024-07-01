@@ -26,6 +26,12 @@ export class SignUpDTO {
   @IsString()
   confirmPassword: string;
 }
+export class RefreshTokenDTO {
+  @ApiProperty({ description: 'refreshToken to get new access token' })
+  @IsNotEmpty()
+  @IsString()
+  refreshToken: string;
+}
 
 export class JwtPayloadDTO {
   public username: string;

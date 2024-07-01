@@ -5,8 +5,13 @@ import {
   BaseEntity,
   BeforeInsert,
   BeforeUpdate,
+  OneToOne,
+  JoinColumn,
+  ManyToMany,
 } from 'typeorm';
 import { compare, hash } from 'bcrypt';
+import { UserDetailEntity } from './userDetail.entity';
+import { TeamEntity } from './team.entity';
 @Entity()
 export class UserEntity extends BaseEntity {
   @PrimaryGeneratedColumn()
@@ -39,4 +44,11 @@ export class UserEntity extends BaseEntity {
   comparePassword(candidate: string) {
     return compare(candidate, this.password);
   }
+
+  @OneToOne(() => UserDetailEntity, (userDetail) => userDetail.user)
+  userDetail: Promise<UserDetailEntity>;
+
+  @ManyToMany(() => TeamEntity, (team) => team.users)
+  @JoinColumn({ name: 'teamId', referencedColumnName: 'id' })
+  teams: Promise<TeamEntity[]>;
 }

@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { UserRepository } from 'src/repositories/user.repository';
-import { SignInDTO, SignUpDTO } from './dto';
+import { RefreshTokenDTO, SignInDTO, SignUpDTO } from './dto';
 import { JwtService } from '@nestjs/jwt';
 
 import { JWT_SECRET } from 'src/constants/key';
@@ -65,12 +65,21 @@ export class AuthService {
     });
   }
 
-  async refreshToken(data: { refreshToken: string }) {
+  async refreshToken(data: RefreshTokenDTO) {
     const { id } = this.jwtService.verify(data.refreshToken, {
       secret: JWT_SECRET,
     });
     const user = await this.repo.findOneBy({ id });
     if (!user) throw new UnauthorizedException('User not found!');
+
+    const payload = {
+      id: user.id,
+      username: user.username,
+      avatar: user.avatar,
+      isActive: user.isActive,
+      verifyAt: user.verifyAt,
+    };
+    const accessToken = this.jwtService.sign(payload);
 
     const refreshPayload = {
       id: user.id,
@@ -79,6 +88,6 @@ export class AuthService {
       expiresIn: '7d',
     });
 
-    return { refreshToken };
+    return { accessToken, refreshToken };
   }
 }
