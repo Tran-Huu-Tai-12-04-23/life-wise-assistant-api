@@ -8,6 +8,7 @@ import { RefreshTokenDTO, SignInDTO, SignUpDTO } from './dto';
 import { JwtService } from '@nestjs/jwt';
 
 import { JWT_SECRET } from 'src/constants/key';
+import { UserEntity } from 'src/entities';
 
 @Injectable()
 export class AuthService {
@@ -29,16 +30,12 @@ export class AuthService {
     }
 
     const payload = {
-      id: user.id,
-      username: user.username,
-      avatar: user.avatar,
-      isActive: user.isActive,
-      verifyAt: user.verifyAt,
+      uid: user.id,
     };
     const accessToken = this.jwtService.sign(payload);
 
     const refreshPayload = {
-      id: user.id,
+      uid: user.id,
     };
     const refreshToken = this.jwtService.sign(refreshPayload, {
       expiresIn: '7d',
@@ -55,14 +52,14 @@ export class AuthService {
       throw new UnauthorizedException('Password not match!');
     }
 
-    return await this.repo.save({
-      username: signUpDTO.username,
-      password: signUpDTO.password,
-      avatar:
-        'https://cdn3d.iconscout.com/3d/premium/thumb/man-avatar-6299539-5187871.png?f=webp',
-      isActive: true,
-      verifyAt: new Date(),
-    });
+    const newUser = new UserEntity();
+    newUser.username = signUpDTO.username;
+    newUser.password = signUpDTO.password;
+    newUser.avatar =
+      'https://cdn3d.iconscout.com/3d/premium/thumb/man-avatar-6299539-5187871.png?f=webp';
+    newUser.isActive = true;
+    newUser.verifyAt = new Date();
+    return await this.repo.insert(newUser);
   }
 
   async refreshToken(data: RefreshTokenDTO) {
@@ -73,16 +70,12 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('User not found!');
 
     const payload = {
-      id: user.id,
-      username: user.username,
-      avatar: user.avatar,
-      isActive: user.isActive,
-      verifyAt: user.verifyAt,
+      uid: user.id,
     };
     const accessToken = this.jwtService.sign(payload);
 
     const refreshPayload = {
-      id: user.id,
+      uid: user.id,
     };
     const refreshToken = this.jwtService.sign(refreshPayload, {
       expiresIn: '7d',

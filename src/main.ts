@@ -26,6 +26,7 @@ async function bootstrap() {
     .setDescription('The life manager API description')
     .setVersion('1.0')
     .addTag('life-manager')
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

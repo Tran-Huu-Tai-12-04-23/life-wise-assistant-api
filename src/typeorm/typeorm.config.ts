@@ -16,5 +16,6 @@ export const dataSource = new DataSource({
   entities: [resolve(__dirname, '../entities/*.entity{.ts,.js}')],
   migrations: [resolve(__dirname, '../migrations/*{.ts,.js}')],
   connectTimeout: 5000000,
-  synchronize: true,
+  synchronize: false,
+  migrationsRun: true,
 });

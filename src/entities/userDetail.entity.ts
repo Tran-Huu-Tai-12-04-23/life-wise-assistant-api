@@ -1,16 +1,8 @@
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  BaseEntity,
-  JoinColumn,
-  OneToOne,
-} from 'typeorm';
+import { Entity, Column, JoinColumn, OneToOne } from 'typeorm';
 import { UserEntity } from './user.entity';
-@Entity()
-export class UserDetailEntity extends BaseEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
+import { BaseEntityCustom } from './base.entity';
+@Entity(`UserDetails`)
+export class UserDetailEntity extends BaseEntityCustom {
   @Column({ length: 500 })
   fullName: string;
   @Column({ length: 500 })

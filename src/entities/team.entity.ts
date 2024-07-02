@@ -1,17 +1,9 @@
-import {
-  BaseEntity,
-  Column,
-  Entity,
-  ManyToMany,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
 import { UserEntity } from './user.entity';
+import { BaseEntityCustom } from './base.entity';
 
-@Entity()
-export class TeamEntity extends BaseEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+@Entity(`Teams`)
+export class TeamEntity extends BaseEntityCustom {
   @Column()
   name: string;
 
@@ -22,8 +14,9 @@ export class TeamEntity extends BaseEntity {
   description: string;
 
   @Column()
-  tags: string[];
+  tags: string;
 
   @ManyToMany(() => UserEntity, (user) => user.teams)
+  @JoinTable()
   users: Promise<UserEntity[]>;
 }

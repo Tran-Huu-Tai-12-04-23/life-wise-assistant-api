@@ -1,8 +1,6 @@
 import {
   Entity,
   Column,
-  PrimaryGeneratedColumn,
-  BaseEntity,
   BeforeInsert,
   BeforeUpdate,
   OneToOne,
@@ -12,11 +10,10 @@ import {
 import { compare, hash } from 'bcrypt';
 import { UserDetailEntity } from './userDetail.entity';
 import { TeamEntity } from './team.entity';
-@Entity()
-export class UserEntity extends BaseEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+import { TaskEntity } from './task.entity';
+import { BaseEntityCustom } from './base.entity';
+@Entity(`Users`)
+export class UserEntity extends BaseEntityCustom {
   @Column({ length: 500 })
   username: string;
 
@@ -51,4 +48,7 @@ export class UserEntity extends BaseEntity {
   @ManyToMany(() => TeamEntity, (team) => team.users)
   @JoinColumn({ name: 'teamId', referencedColumnName: 'id' })
   teams: Promise<TeamEntity[]>;
+
+  @ManyToMany(() => TaskEntity, (task) => task.lstMember)
+  tasks: Promise<TaskEntity[]>;
 }
