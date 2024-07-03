@@ -17,9 +17,15 @@ export class TaskEntity extends BaseEntityCustom {
   type: string;
   @Column()
   status: string;
+  @Column()
+  cmdCommit: string;
+  @Column()
+  cmdCheckOutBranch: string;
+  @Column()
+  sourceCodeLink: string;
   @ManyToMany(() => UserEntity, (user) => user)
   @JoinColumn({ name: 'userId', referencedColumnName: 'id' })
-  lstMember: Promise<UserEntity>;
+  lstMember: Promise<UserEntity[]>;
   @OneToMany(() => ColumnEntity, (column) => column.tasks)
   @JoinColumn({ name: 'columnId', referencedColumnName: 'id' })
   column: Promise<ColumnEntity>;

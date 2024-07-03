@@ -14,7 +14,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { RemoveUserTeamDTO, TeamDTO } from './dto';
+import { InviteLstMemberDTO, RemoveUserTeamDTO, TeamDTO } from './dto';
 import { TeamsService } from './team.service';
 import { JwtAuthGuard } from '../auth/jwt.auth.guard';
 import { CurrentUser } from 'src/helpers/decorators';
@@ -36,6 +36,28 @@ export class TeamController {
   @Post()
   async create(@Body() teamDTO: TeamDTO, @CurrentUser() user: UserEntity) {
     return await this.service.create(teamDTO, user);
+  }
+
+  @ApiOperation({
+    summary: 'Invite member to team',
+  })
+  @ApiResponse({ status: 201, type: TeamEntity })
+  @Get('invite/:id')
+  async inviteMember(@Param('id') id: string, @CurrentUser() user: UserEntity) {
+    return await this.service.addUserToTeam(id, user.id);
+  }
+
+  @ApiOperation({
+    summary: 'Invite lst member to team',
+  })
+  @ApiResponse({ status: 201, type: TeamEntity })
+  @Post('invite-multi/:id')
+  async inviteLstMember(
+    @Param('id') id: string,
+    @Body()
+    data: InviteLstMemberDTO,
+  ) {
+    return await this.service.addUsersToTeam(id, data);
   }
 
   @ApiOperation({

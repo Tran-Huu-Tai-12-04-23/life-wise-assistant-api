@@ -3,4 +3,4 @@ import { CustomRepository } from 'src/typeorm/typeorm-decorater';
 import { Repository } from 'typeorm';
 
 @CustomRepository(TaskEntity)
-export class TaskRepository extends Repository<TaskRepository> {}
+export class TaskRepository extends Repository<TaskEntity> {}

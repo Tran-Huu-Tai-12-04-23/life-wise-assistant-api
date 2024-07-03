@@ -1,0 +1,91 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/jwt.auth.guard';
+import { TaskService } from './task.service';
+import { UserEntity } from 'src/entities';
+import { CurrentUser } from 'src/helpers/decorators';
+import { ChangeStatusTaskDTO, TaskDTO } from './dto';
+
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+@ApiTags('Tasks CRUD')
+@Controller('task')
+export class TaskController {
+  constructor(private readonly service: TaskService) {}
+  @ApiOperation({
+    summary: 'Add task to column',
+  })
+  @ApiResponse({ status: 201 })
+  @Post()
+  async addTaskToColumn(
+    @Body() taskDTO: TaskDTO,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return await this.service.create(taskDTO, user);
+  }
+
+  @ApiOperation({
+    summary: 'Change status task',
+  })
+  @ApiResponse({ status: 201 })
+  @Post('update-status')
+  async updateStatusTask(
+    @Body() changeStatusTaskDTO: ChangeStatusTaskDTO,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return await this.service.changeStatus(changeStatusTaskDTO, user);
+  }
+
+  @ApiOperation({
+    summary: 'Delete task',
+  })
+  @ApiResponse({ status: 201 })
+  @Delete('delete/:id')
+  async deleteTask(@Param('id') id: string, @CurrentUser() user: UserEntity) {
+    return await this.service.deleteSoft(id, user);
+  }
+
+  @ApiOperation({
+    summary: 'Restore task',
+  })
+  @ApiResponse({ status: 201 })
+  @Post('restore/:id')
+  async restoreTask(@Param('id') id: string, @CurrentUser() user: UserEntity) {
+    return await this.service.restoreTask(id, user);
+  }
+
+  @ApiOperation({
+    summary: 'Delete task',
+  })
+  @ApiResponse({ status: 201 })
+  @Post('force-delete/:id')
+  async forceDelete(@Param('id') id: string) {
+    return await this.service.deleteForce(id);
+  }
+
+  @ApiOperation({
+    summary: 'Update tasks',
+  })
+  @ApiResponse({ status: 201 })
+  @Put('update/:id')
+  async updateTask(
+    @Param('id') id: string,
+    @Body() taskDTO: TaskDTO,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return await this.service.update(taskDTO, id, user);
+  }
+}

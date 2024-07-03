@@ -52,6 +52,13 @@ export abstract class BaseEntityCustom extends BaseEntity {
   @Column({ type: 'varchar', length: 36, nullable: true })
   updatedBy: string;
 
+  @ApiProperty({
+    description: 'Last deleted, save user.id',
+    example: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+  })
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  deleteBy: string;
+
   @ApiProperty({ description: 'Soft delete?', example: false })
   @Column({ name: 'isDeleted', default: false })
   isDeleted: boolean;

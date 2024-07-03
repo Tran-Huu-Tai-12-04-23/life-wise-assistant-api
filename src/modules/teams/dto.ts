@@ -38,3 +38,11 @@ export class RemoveUserTeamDTO {
   @IsString()
   userId: string;
 }
+
+export class InviteLstMemberDTO {
+  @ApiProperty({ description: 'List of user IDs' })
+  @IsNotEmpty()
+  @IsArray()
+  @IsString({ each: true })
+  lstMembers: string[];
+}

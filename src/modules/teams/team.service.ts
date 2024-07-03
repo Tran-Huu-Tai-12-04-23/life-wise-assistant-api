@@ -1,7 +1,7 @@
 import { PaginationDTO } from './../dto/index';
 import { Injectable } from '@nestjs/common';
 import { TeamRepository } from 'src/repositories/team.repository';
-import { RemoveUserTeamDTO, TeamDTO } from './dto';
+import { InviteLstMemberDTO, RemoveUserTeamDTO, TeamDTO } from './dto';
 import { TeamEntity } from 'src/entities/team.entity';
 import { UserRepository } from 'src/repositories';
 import { In } from 'typeorm';
@@ -16,7 +16,7 @@ export class TeamsService {
 
   async pagination(paginationDTO: PaginationDTO) {
     const data: [any[], number] = await this.repo.findAndCount({
-      where: { ...paginationDTO.where },
+      where: { ...paginationDTO.where, isDeleted: false },
       relations: { users: true },
       order: { ...paginationDTO.order },
       skip: paginationDTO.skip,
@@ -63,6 +63,21 @@ export class TeamsService {
     (await team.users).push(user);
     await this.repo.save(team);
     return { message: 'User added to team successfully', data: team };
+  }
+  async addUsersToTeam(id: string, data: InviteLstMemberDTO) {
+    const team = await this.repo.findOneBy({ id });
+    if (!team) {
+      throw new Error('Team not found!');
+    }
+    const users: UserEntity[] = await this.userRepo.find({
+      where: { id: In(data.lstMembers) },
+    });
+    if (users.length === 0) {
+      throw new Error('User not found!');
+    }
+    (await team.users).push(...users);
+    await this.repo.save(team);
+    return { message: 'Users added to team successfully', data: team };
   }
 
   async removeUserFromTeam(removeUserTeamDTO: RemoveUserTeamDTO) {
