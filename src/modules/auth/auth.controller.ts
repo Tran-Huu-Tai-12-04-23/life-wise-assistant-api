@@ -1,12 +1,25 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RefreshTokenDTO, SignInDTO, SignUpDTO } from './dto';
+import { UserEntity } from 'src/entities';
+import { CurrentUser } from 'src/helpers/decorators';
+import { JwtAuthGuard } from './jwt.auth.guard';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly service: AuthService) {}
+
+  @ApiOperation({
+    summary: 'Get profile of user',
+  })
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async getProfile(@CurrentUser() user: UserEntity) {
+    return user;
+  }
 
   @ApiOperation({
     summary: 'Login with username and password',

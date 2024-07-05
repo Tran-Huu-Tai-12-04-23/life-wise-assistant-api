@@ -20,9 +20,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: { uid: string }) {
     const user: any = await this.userRepo.findOne({
       where: { id: payload.uid },
-      relations: {},
+      relations: {
+        userDetail: true,
+      },
     });
-    if (!user) throw new UnauthorizedException('No premission!');
-    return user;
+    if (!user) throw new UnauthorizedException('No permission!');
+
+    const detail = user.__userDetail__;
+    delete user.__userDetail__;
+    delete user.password;
+    return {
+      ...user,
+      userDetail: detail,
+    };
   }
 }

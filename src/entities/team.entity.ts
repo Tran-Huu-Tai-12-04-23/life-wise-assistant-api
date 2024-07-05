@@ -26,7 +26,7 @@ export class TeamEntity extends BaseEntityCustom {
 
   @ManyToMany(() => UserEntity, (user) => user.teams)
   @JoinTable()
-  users: Promise<UserEntity[]>;
+  members: Promise<UserEntity[]>;
 
   @ManyToOne(() => ColumnEntity, (column) => column.team)
   @JoinColumn({ name: 'columnId', referencedColumnName: 'id' })

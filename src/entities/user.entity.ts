@@ -29,6 +29,9 @@ export class UserEntity extends BaseEntityCustom {
   @Column()
   isActive: boolean;
 
+  @Column({ default: 'MEMBER' })
+  role: string;
+
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword() {
@@ -45,7 +48,7 @@ export class UserEntity extends BaseEntityCustom {
   @OneToOne(() => UserDetailEntity, (userDetail) => userDetail.user)
   userDetail: Promise<UserDetailEntity>;
 
-  @ManyToMany(() => TeamEntity, (team) => team.users)
+  @ManyToMany(() => TeamEntity, (team) => team.members)
   @JoinColumn({ name: 'teamId', referencedColumnName: 'id' })
   teams: Promise<TeamEntity[]>;
 

@@ -17,7 +17,7 @@ export class TeamsService {
   async pagination(paginationDTO: PaginationDTO) {
     const data: [any[], number] = await this.repo.findAndCount({
       where: { ...paginationDTO.where, isDeleted: false },
-      relations: { users: true },
+      relations: { members: true },
       order: { ...paginationDTO.order },
       skip: paginationDTO.skip,
       take: paginationDTO.take,
@@ -44,7 +44,7 @@ export class TeamsService {
     teamEntity.thumbnails = data.thumbnails;
     teamEntity.description = data.description;
     teamEntity.tags = data.tags;
-    teamEntity.users = Promise.resolve(lstMember);
+    teamEntity.members = Promise.resolve(lstMember);
     console.log(teamEntity);
     const res = await this.repo.save(teamEntity);
 
@@ -60,7 +60,7 @@ export class TeamsService {
     if (!user) {
       throw new Error('User not found!');
     }
-    (await team.users).push(user);
+    (await team.members).push(user);
     await this.repo.save(team);
     return { message: 'User added to team successfully', data: team };
   }
@@ -75,7 +75,7 @@ export class TeamsService {
     if (users.length === 0) {
       throw new Error('User not found!');
     }
-    (await team.users).push(...users);
+    (await team.members).push(...users);
     await this.repo.save(team);
     return { message: 'Users added to team successfully', data: team };
   }
@@ -91,8 +91,8 @@ export class TeamsService {
     if (!user) {
       throw new Error('User not found!');
     }
-    team.users = Promise.resolve(
-      (await team.users).filter((u) => u.id !== removeUserTeamDTO.userId),
+    team.members = Promise.resolve(
+      (await team.members).filter((u) => u.id !== removeUserTeamDTO.userId),
     );
     await this.repo.save(team);
     return { message: 'User removed from team successfully', data: team };
@@ -121,7 +121,7 @@ export class TeamsService {
       .createQueryBuilder()
       .select('team')
       .from(TeamEntity, 'team')
-      .leftJoinAndSelect('team.users', 'user')
+      .leftJoinAndSelect('team.members', 'user')
       .where('team.id = :id', { id: id })
       .andWhere('user.id = :userId', { userId: user.id })
       .getOne();
