@@ -32,7 +32,7 @@ export class TaskService {
 
     const lstPersonInCharge = await this.userRepository.find({
       where: {
-        id: In([...taskDTO.lstPersonInCharge, user.id]),
+        id: In([...taskDTO.lstPersonInCharge]),
         isDeleted: false,
       },
     });
