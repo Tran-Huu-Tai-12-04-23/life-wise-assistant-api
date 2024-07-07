@@ -3,7 +3,7 @@ name: Deploy to Server
 on:
   push:
     branches:
-      - main
+      - develop
 
 jobs:
   deploy:
@@ -23,13 +23,13 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build Docker image
-        run: docker build -t ${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }} .
+        run: docker build -t ${{ secrets.IMAGE_NAME }}-develop:${{ secrets.TAG_NAME }} .
 
       - name: Add tag docker image (optional)
-        run: docker tag ${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }} ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }}_${{ github.sha }}
+        run: docker tag ${{ secrets.IMAGE_NAME }}-develop:${{ secrets.TAG_NAME }} ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}-develop:${{ secrets.TAG_NAME }}_${{ github.sha }}
 
       - name: Push Docker image to docker hub (optional)
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }}_${{ github.sha }}
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}-develop:${{ secrets.TAG_NAME }}_${{ github.sha }}
 
       - name: Deploy to Server (using SSH and Docker)
         env:
@@ -43,14 +43,14 @@ jobs:
         run: |
           sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no -p 24700 $SSH_USERNAME@$SSH_HOST << 'EOF'
             mkdir -p /container && cd /container
-            if docker ps -aq --filter name=${{ secrets.IMAGE_NAME }} | grep -q .; then
-                docker stop ${{ secrets.IMAGE_NAME }} || true
-                docker rm -f ${{ secrets.IMAGE_NAME }} || true
+            if docker ps -aq --filter name=${{ secrets.IMAGE_NAME }}-develop | grep -q .; then
+                docker stop ${{ secrets.IMAGE_NAME }}-develop || true
+                docker rm -f ${{ secrets.IMAGE_NAME }}-develop || true
             fi
-            if docker images --filter=reference=${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }} --quiet | grep -q .; then
-                docker images --filter=reference=${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }} --quiet | xargs -r docker rmi -f
+            if docker images --filter=reference=${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}-develop --quiet | grep -q .; then
+                docker images --filter=reference=${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}-develop --quiet | xargs -r docker rmi -f
             fi
-            docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }}_${{ github.sha }}
-            docker run -d -p 3000:3000 --name ${{ secrets.IMAGE_NAME }} ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}:${{ secrets.TAG_NAME }}_${{ github.sha }}
+            docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}-develop:${{ secrets.TAG_NAME }}_${{ github.sha }}
+            docker run -d -p 3001:3000 --name ${{ secrets.IMAGE_NAME }}-develop ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}-develop:${{ secrets.TAG_NAME }}_${{ github.sha }}
           EOF
 
