@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   Post,
   Put,
@@ -18,7 +17,7 @@ import { ColumnService } from './column.service';
 import { JwtAuthGuard } from '../auth/jwt.auth.guard';
 import { CurrentUser } from 'src/helpers/decorators';
 import { UserEntity } from 'src/entities';
-import { ColumnDTO } from './dto';
+import { ColumnDTO, GetAllColumnsDTO, SwapColDTO } from './dto';
 
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
@@ -31,9 +30,9 @@ export class ColumnController {
     summary: 'Get all column of team',
   })
   @ApiResponse({ status: 201 })
-  @Get(':id')
-  async getAllOfTeam(@Param('id') id: string) {
-    return await this.service.getAll(id);
+  @Post('team')
+  async getAllOfTeam(@Body() getAllColumnDTO: GetAllColumnsDTO) {
+    return await this.service.getAll(getAllColumnDTO);
   }
   @ApiOperation({
     summary: 'Create new column',
@@ -42,6 +41,15 @@ export class ColumnController {
   @Post()
   async create(@Body() columnDTO: ColumnDTO, @CurrentUser() user: UserEntity) {
     return await this.service.create(columnDTO, user);
+  }
+
+  @ApiOperation({
+    summary: 'Swap between columns',
+  })
+  @ApiResponse({ status: 201 })
+  @Post('swap-between-col')
+  async swapBetweenCol(@Body() swapBetweenColDTO: SwapColDTO) {
+    return await this.service.swapCol(swapBetweenColDTO);
   }
 
   @ApiOperation({

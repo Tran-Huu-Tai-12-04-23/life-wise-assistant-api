@@ -4,11 +4,18 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { UserRepository } from 'src/repositories/user.repository';
-import { RefreshTokenDTO, SignInDTO, SignUpDTO } from './dto';
+import {
+  FilterLstUserToInviteTeamDTO,
+  RefreshTokenDTO,
+  SignInDTO,
+  SignUpDTO,
+} from './dto';
 import { JwtService } from '@nestjs/jwt';
 
 import { JWT_SECRET } from 'src/constants/key';
 import { UserEntity } from 'src/entities';
+import { Like, Not } from 'typeorm';
+import { PaginationDTO } from '../dto';
 
 @Injectable()
 export class AuthService {
@@ -82,5 +89,25 @@ export class AuthService {
     });
 
     return { accessToken, refreshToken };
+  }
+
+  async getLstUserToInviteTeam(
+    user: UserEntity,
+    data: PaginationDTO<FilterLstUserToInviteTeamDTO>,
+  ) {
+    const where: any = {
+      id: Not([user.id, ...(data.where?.lstUserTeamExist || [])]),
+      isActive: true,
+      isDeleted: false,
+    };
+    if (data.where?.name) {
+      where.username = Like(`%${data.where.name}%`);
+    }
+    const lstUser = await this.repo.findAndCount({
+      where: where,
+      skip: data.skip,
+      take: data.take,
+    });
+    return lstUser;
   }
 }

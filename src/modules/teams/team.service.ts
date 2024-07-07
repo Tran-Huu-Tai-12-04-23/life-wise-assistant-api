@@ -4,7 +4,7 @@ import { TeamRepository } from 'src/repositories/team.repository';
 import { InviteLstMemberDTO, RemoveUserTeamDTO, TeamDTO } from './dto';
 import { TeamEntity } from 'src/entities/team.entity';
 import { UserRepository } from 'src/repositories';
-import { In } from 'typeorm';
+import { In, Like } from 'typeorm';
 import { UserEntity } from 'src/entities';
 
 @Injectable()
@@ -14,17 +14,40 @@ export class TeamsService {
     private userRepo: UserRepository,
   ) {}
 
-  async pagination(paginationDTO: PaginationDTO) {
-    const data: [any[], number] = await this.repo.findAndCount({
-      where: { ...paginationDTO.where, isDeleted: false },
-      relations: { members: true },
-      order: { ...paginationDTO.order },
-      skip: paginationDTO.skip,
-      take: paginationDTO.take,
+  async getYourWorkPlace(user: UserEntity) {
+    return await this.repo.findOne({
+      where: { id: user.id, isWorkPlace: true },
     });
-    const res = data[0].map((item) => {
-      const { __users__, ...team } = item;
-      return { ...team, users: __users__ };
+  }
+
+  async pagination(paginationDTO: PaginationDTO, user: UserEntity) {
+    const where: any = {};
+    if (paginationDTO.where?.name) {
+      where.name = Like(`%${paginationDTO.where.name}%`);
+    }
+    const data: [any[], number] = await this.repo.findAndCount({
+      where: {
+        ...where,
+        isDeleted: false,
+        isWorkPlace: false,
+        members: {
+          id: In([user.id, ...(paginationDTO.where?.members || [])]),
+        },
+      },
+      relations: { members: true },
+      order: { createdAt: 'DESC' },
+      skip: paginationDTO.skip,
+      take: paginationDTO?.take || 10,
+    });
+    const lstTeamId = data[0].map((item) => item.id);
+    const lstTeams: any = await this.repo.find({
+      where: { id: In(lstTeamId) },
+      relations: { members: true },
+    });
+    const res = lstTeams.map((item: any) => {
+      const { __members__, ...team } = item;
+      delete item.__members__;
+      return { ...team, members: __members__ };
     });
 
     return [res, data[1]];
@@ -36,7 +59,7 @@ export class TeamsService {
     }
     let lstMember = [user];
     const users: UserEntity[] = await this.userRepo.find({
-      where: { id: In(data.users) },
+      where: { id: In(data.members) },
     });
     lstMember = [...lstMember, ...(users || [])];
     const teamEntity = new TeamEntity();
@@ -44,11 +67,17 @@ export class TeamsService {
     teamEntity.thumbnails = data.thumbnails;
     teamEntity.description = data.description;
     teamEntity.tags = data.tags;
-    teamEntity.members = Promise.resolve(lstMember);
-    console.log(teamEntity);
-    const res = await this.repo.save(teamEntity);
+    teamEntity.createdAt = new Date();
+    teamEntity.createdBy = user.id;
+    teamEntity.createdByName = user.username;
+    teamEntity.isWorkPlace = data.isWorkPlace || false;
 
-    return { message: 'Team created successfully', data: res };
+    teamEntity.members = Promise.resolve(lstMember);
+    const res: any = await this.repo.save(teamEntity);
+    const members = res.__members__;
+    delete res.__members__;
+
+    return { message: 'Team created successfully', data: { ...res, members } };
   }
 
   async addUserToTeam(id: string, userId: string) {

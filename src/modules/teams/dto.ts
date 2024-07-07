@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsArray,
+  IsOptional,
+  IsBoolean,
+} from 'class-validator';
 
 export class TeamDTO {
   @ApiProperty({ description: 'Team name' })
@@ -18,15 +24,19 @@ export class TeamDTO {
   description: string;
 
   @ApiProperty({ description: 'Tags of team' })
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   tags: string;
 
+  @ApiProperty({ description: 'Is work place' })
+  @IsOptional()
+  @IsBoolean()
+  isWorkPlace: boolean;
   @ApiProperty({ description: 'List of user IDs' })
   @IsNotEmpty()
   @IsArray()
   @IsString({ each: true })
-  users: string[];
+  members: string[];
 }
 export class RemoveUserTeamDTO {
   @ApiProperty({ description: 'Team ID' })

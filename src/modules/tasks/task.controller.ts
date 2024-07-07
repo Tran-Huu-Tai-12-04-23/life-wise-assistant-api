@@ -17,7 +17,12 @@ import { JwtAuthGuard } from '../auth/jwt.auth.guard';
 import { TaskService } from './task.service';
 import { UserEntity } from 'src/entities';
 import { CurrentUser } from 'src/helpers/decorators';
-import { ChangeStatusTaskDTO, TaskDTO } from './dto';
+import {
+  ChangeStatusTaskDTO,
+  MoveTaskInAnotherColumnDTO,
+  MoveTaskInTheSameColumnDTO,
+  TaskDTO,
+} from './dto';
 
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
@@ -35,6 +40,28 @@ export class TaskController {
     @CurrentUser() user: UserEntity,
   ) {
     return await this.service.create(taskDTO, user);
+  }
+  @ApiOperation({
+    summary: 'Move task in the same column',
+  })
+  @Post('move-task-in-the-same-column')
+  async moveTaskInTheSameColumn(
+    @Body() moveTaskInTheSameColumnDTO: MoveTaskInTheSameColumnDTO,
+  ) {
+    return await this.service.moveTaskInTheSameColumn(
+      moveTaskInTheSameColumnDTO,
+    );
+  }
+
+  @ApiOperation({
+    summary: 'Move task to different column',
+  })
+  @Post('move-task-to-diff-column')
+  async moveTaskToDiffCol(
+    @Body() moveTaskToDiffCol: MoveTaskInAnotherColumnDTO,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return await this.service.moveTaskToAnotherColumn(moveTaskToDiffCol, user);
   }
 
   @ApiOperation({

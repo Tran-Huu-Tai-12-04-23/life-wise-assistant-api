@@ -1,4 +1,11 @@
-import { Column, Entity, JoinColumn, ManyToMany, OneToMany } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+} from 'typeorm';
 import { ColumnEntity } from './column.entity';
 import { UserEntity } from './user.entity';
 import { BaseEntityCustom } from './base.entity';
@@ -11,22 +18,26 @@ export class TaskEntity extends BaseEntityCustom {
   description: string;
   @Column()
   dateExpire: Date;
-  @Column()
+  @Column({ default: 'MEDIUM' })
   priority: string;
-  @Column()
+  @Column({ default: 'TASK' })
   type: string;
-  @Column()
+  @Column({ default: 'TO_ASSIGN' })
   status: string;
-  @Column()
-  cmdCommit: string;
-  @Column()
+  @Column({ default: '' })
+  fileLink: string;
+  @Column({ default: '' })
   cmdCheckOutBranch: string;
-  @Column()
+  @Column({ default: '' })
+  cmdCommit: string;
+  @Column({ default: '' })
   sourceCodeLink: string;
+  @Column()
+  index: number;
   @ManyToMany(() => UserEntity, (user) => user)
-  @JoinColumn({ name: 'userId', referencedColumnName: 'id' })
-  lstMember: Promise<UserEntity[]>;
-  @OneToMany(() => ColumnEntity, (column) => column.tasks)
+  @JoinTable()
+  lstPersonInCharge: Promise<UserEntity[]>;
+  @ManyToOne(() => ColumnEntity, (column) => column.tasks)
   @JoinColumn({ name: 'columnId', referencedColumnName: 'id' })
   column: Promise<ColumnEntity>;
 }

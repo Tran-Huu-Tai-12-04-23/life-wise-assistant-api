@@ -39,6 +39,15 @@ export class TeamController {
   }
 
   @ApiOperation({
+    summary: 'Get your workplace',
+  })
+  @ApiResponse({ status: 201, type: TeamEntity })
+  @Get('work-place')
+  async getYourWorkPlace(@CurrentUser() user: UserEntity) {
+    return await this.service.getYourWorkPlace(user);
+  }
+
+  @ApiOperation({
     summary: 'Invite member to team',
   })
   @ApiResponse({ status: 201, type: TeamEntity })
@@ -65,8 +74,11 @@ export class TeamController {
   })
   @ApiResponse({ status: 200 })
   @Post('pagination')
-  async pagination(@Body() paginationDTO: PaginationDTO) {
-    return await this.service.pagination(paginationDTO);
+  async pagination(
+    @Body() paginationDTO: PaginationDTO,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return await this.service.pagination(paginationDTO, user);
   }
 
   @ApiOperation({

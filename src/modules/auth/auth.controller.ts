@@ -1,15 +1,35 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { RefreshTokenDTO, SignInDTO, SignUpDTO } from './dto';
+import {
+  FilterLstUserToInviteTeamDTO,
+  RefreshTokenDTO,
+  SignInDTO,
+  SignUpDTO,
+} from './dto';
 import { UserEntity } from 'src/entities';
 import { CurrentUser } from 'src/helpers/decorators';
 import { JwtAuthGuard } from './jwt.auth.guard';
+import { PaginationDTO } from '../dto';
+import { enumData } from 'src/constants/enum-data';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly service: AuthService) {}
+
+  @ApiOperation({
+    summary: 'Get lst user to invite team',
+  })
+  @Post('lst-user-to-invite-team')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async getLstUserFilter(
+    @CurrentUser() user: UserEntity,
+    @Body() filter: PaginationDTO<FilterLstUserToInviteTeamDTO>,
+  ) {
+    return await this.service.getLstUserToInviteTeam(user, filter);
+  }
 
   @ApiOperation({
     summary: 'Get profile of user',
@@ -18,7 +38,10 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   async getProfile(@CurrentUser() user: UserEntity) {
-    return user;
+    return {
+      user,
+      enumData: enumData,
+    };
   }
 
   @ApiOperation({

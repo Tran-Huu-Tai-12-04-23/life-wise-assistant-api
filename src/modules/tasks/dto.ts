@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsArray,
+  IsNumber,
+} from 'class-validator';
 
 export class TaskDTO {
   @ApiProperty({ description: 'Task title' })
@@ -15,7 +21,7 @@ export class TaskDTO {
   @ApiProperty({ description: 'Date to complete ' })
   @IsNotEmpty()
   @IsString()
-  dateToComplete: Date;
+  dateExpire: Date;
 
   @ApiProperty({ description: 'Task priority' })
   @IsNotEmpty()
@@ -29,18 +35,18 @@ export class TaskDTO {
 
   @ApiProperty({ description: 'Lst person in charge' })
   @IsNotEmpty()
-  @IsString()
+  @IsArray()
   lstPersonInCharge: string[];
 
   @ApiProperty({ description: 'File document in link' })
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  fileLink: string[];
+  fileLink: string;
 
   @ApiProperty({ description: 'Link source code' })
   @IsOptional()
   @IsString()
-  sourceCodeLink: string[];
+  sourceCodeLink: string;
 
   @ApiProperty({ description: 'Column id' })
   @IsNotEmpty()
@@ -57,4 +63,40 @@ export class ChangeStatusTaskDTO {
   @IsNotEmpty()
   @IsString()
   status: string;
+}
+
+export class MoveTaskInTheSameColumnDTO {
+  @ApiProperty({ description: 'Column id' })
+  @IsNotEmpty()
+  @IsString()
+  columnId: string;
+
+  @ApiProperty({ description: 'Task current index' })
+  @IsNotEmpty()
+  @IsNumber()
+  taskCurrentIndex: number;
+  @ApiProperty({ description: 'Task new index' })
+  @IsNotEmpty()
+  @IsNumber()
+  taskNewIndex: number;
+}
+
+export class MoveTaskInAnotherColumnDTO {
+  @ApiProperty({ description: 'Task current index' })
+  @IsNotEmpty()
+  @IsNumber()
+  taskCurrentIndex: number;
+  @ApiProperty({ description: 'Task new index' })
+  @IsNotEmpty()
+  @IsNumber()
+  taskNewIndex: number;
+  @ApiProperty({ description: 'Column from id' })
+  @IsNotEmpty()
+  @IsString()
+  columnIdFrom: string;
+
+  @ApiProperty({ description: 'Column from id' })
+  @IsNotEmpty()
+  @IsString()
+  columnIdTo: string;
 }

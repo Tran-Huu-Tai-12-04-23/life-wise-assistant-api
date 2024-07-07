@@ -1,11 +1,16 @@
 import { ColumnRepository } from './../../repositories/column.repository';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { TaskEntity } from 'src/entities/task.entity';
 import { TaskRepository, UserRepository } from 'src/repositories';
 import { UserEntity } from 'src/entities';
-import { In } from 'typeorm';
+import { Between, In, MoreThan } from 'typeorm';
+import {
+  ChangeStatusTaskDTO,
+  MoveTaskInAnotherColumnDTO,
+  MoveTaskInTheSameColumnDTO,
+  TaskDTO,
+} from './dto';
 import { enumData } from 'src/constants/enum-data';
-import { ChangeStatusTaskDTO, TaskDTO } from './dto';
 
 @Injectable()
 export class TaskService {
@@ -16,12 +21,15 @@ export class TaskService {
   ) {}
 
   async create(taskDTO: TaskDTO, user: UserEntity) {
-    const column = await this.columnRepository.findOneBy({
-      id: taskDTO.columnId,
+    const column: any = await this.columnRepository.findOne({
+      where: { id: taskDTO.columnId },
+      relations: { tasks: true },
     });
+
     if (column == null) {
       throw new Error('Column not found!');
     }
+
     const lstPersonInCharge = await this.userRepository.find({
       where: {
         id: In([...taskDTO.lstPersonInCharge, user.id]),
@@ -29,21 +37,167 @@ export class TaskService {
       },
     });
 
+    const newIndexTask = column.__tasks__.length + 1;
     const newTask = new TaskEntity();
 
-    if (lstPersonInCharge.length > 0) {
-      newTask.lstMember = Promise.resolve(lstPersonInCharge);
-    }
+    newTask.index = newIndexTask;
+    newTask.priority = taskDTO.priority;
+    newTask.type = taskDTO.type;
     newTask.title = taskDTO.title;
     newTask.description = taskDTO.description;
+    newTask.fileLink = taskDTO.fileLink;
+    newTask.sourceCodeLink = taskDTO.sourceCodeLink;
     newTask.column = Promise.resolve(column);
+    newTask.lstPersonInCharge = Promise.resolve(lstPersonInCharge);
     newTask.createdBy = user.id;
-    newTask.status = enumData.task_status.TO_ASSIGN.code;
-    await this.taskRepository.insert(newTask);
+    newTask.createdByName = user.username;
+    newTask.createdAt = new Date();
+    newTask.dateExpire = taskDTO.dateExpire;
+    newTask.cmdCheckOutBranch = `git checkout -b ${taskDTO.title}`;
+    newTask.cmdCommit = `git commit -m "feature: ${taskDTO.title}"`;
+    newTask.status = column.statusCode;
 
+    const task = await this.taskRepository.save(newTask);
+
+    const taskDetail: any = await this.taskRepository.findOne({
+      where: { id: task.id, isDeleted: false },
+      relations: {
+        lstPersonInCharge: true,
+      },
+    });
+
+    const lstMember = taskDetail.__lstPersonInCharge__;
+
+    delete taskDetail.__lstMember__;
     return {
       message: 'Task created successfully',
-      data: newTask,
+      data: { ...taskDetail, lstMember },
+    };
+  }
+
+  // move task in the same column and in the same team
+  async moveTaskInTheSameColumn(
+    moveTaskInTheSameColumnDTO: MoveTaskInTheSameColumnDTO,
+  ) {
+    const taskCurrentIndex = moveTaskInTheSameColumnDTO.taskCurrentIndex;
+    const taskNewIndex = moveTaskInTheSameColumnDTO.taskNewIndex;
+    const columnId = moveTaskInTheSameColumnDTO.columnId;
+
+    // Check user permission (same as before)
+
+    // Fetch tasks in the affected range (inclusive)
+    const affectedTasks = await this.taskRepository.find({
+      where: {
+        index:
+          taskCurrentIndex < taskNewIndex
+            ? Between(taskCurrentIndex, taskNewIndex)
+            : Between(taskNewIndex, taskCurrentIndex),
+        column: { id: columnId },
+      },
+      order: { index: 'ASC' },
+    });
+
+    // Efficiently update task indices using a single transaction
+    await this.taskRepository.manager.transaction(async (transaction) => {
+      const currentTask = affectedTasks.find(
+        (task) => task.index === taskCurrentIndex,
+      )!;
+      if (!currentTask) {
+        throw new NotFoundException('Task not found!');
+      }
+      currentTask.index = taskNewIndex;
+      affectedTasks.forEach((task) => {
+        if (task !== currentTask) {
+          task.index = task.index + 1;
+        }
+      });
+
+      await transaction.save(affectedTasks);
+    });
+
+    return {
+      message: 'Task moved successfully!',
+    };
+  }
+
+  // move task in the another column and in the same team
+  async moveTaskToAnotherColumn(
+    moveTaskDTO: MoveTaskInAnotherColumnDTO,
+    user: UserEntity,
+  ) {
+    const { taskCurrentIndex, taskNewIndex, columnIdFrom, columnIdTo } =
+      moveTaskDTO;
+
+    // Retrieve the target column (where the task will be moved to)
+    const columnTo = await this.columnRepository.findOneBy({ id: columnIdTo });
+    if (!columnTo) {
+      throw new NotFoundException('Column not found!');
+    }
+
+    // Fetch tasks affected in the source and destination columns
+    const [targetTasks, sourceTask, sourceTasks] = await Promise.all([
+      this.taskRepository.find({
+        where: {
+          column: { id: columnIdTo },
+          index: MoreThan(taskNewIndex - 1),
+        },
+        order: { index: 'ASC' },
+      }),
+      this.taskRepository.findOne({
+        where: {
+          column: { id: columnIdFrom },
+          index: taskCurrentIndex,
+        },
+      }),
+      this.taskRepository.find({
+        where: {
+          column: { id: columnIdFrom },
+          index: MoreThan(taskCurrentIndex),
+        },
+      }),
+    ]);
+
+    if (!sourceTask) {
+      throw new NotFoundException('Task not found!');
+    }
+
+    // Efficiently update task indices using a single transaction
+    await this.taskRepository.manager.transaction(
+      async (transactionalEntityManager) => {
+        // Update indices for target tasks in the destination column
+        for (const task of targetTasks) {
+          task.index += 1;
+        }
+
+        // Update indices for source tasks in the source column
+        for (const task of sourceTasks) {
+          task.index -= 1;
+        }
+
+        // Update the source task's details
+        sourceTask.index = taskNewIndex;
+        sourceTask.status = columnTo.statusCode;
+        sourceTask.column = Promise.resolve(columnTo);
+        sourceTask.updatedBy = user.id;
+        sourceTask.updatedAt = new Date();
+
+        // Save all updated tasks within the transaction
+        await transactionalEntityManager.save([
+          ...targetTasks,
+          ...sourceTasks,
+          sourceTask,
+        ]);
+      },
+    );
+
+    // Get the status name of the target column
+    const statusNameTo =
+      enumData.taskStatus[
+        columnTo.statusCode as keyof typeof enumData.taskStatus
+      ].name;
+
+    return {
+      message: `${sourceTask.title} moved to ${statusNameTo}`,
     };
   }
 
@@ -69,7 +223,7 @@ export class TaskService {
     task.title = taskDTO.title;
     task.description = taskDTO.description;
     if (lstPersonInCharge.length > 0) {
-      task.lstMember = Promise.resolve(lstPersonInCharge);
+      task.lstPersonInCharge = Promise.resolve(lstPersonInCharge);
     }
     task.updatedBy = user.id;
     await this.taskRepository.save(task);

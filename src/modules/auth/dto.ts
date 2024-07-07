@@ -1,6 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
+export class FilterLstUserToInviteTeamDTO {
+  @ApiProperty({ description: 'List user id' })
+  @IsOptional()
+  @IsString()
+  lstUserTeamExist: string[];
+
+  @ApiProperty({ description: 'Name of user' })
+  @IsOptional()
+  @IsString()
+  name: string;
+}
 export class SignInDTO {
   @ApiProperty({ description: 'Username' })
   @IsNotEmpty()

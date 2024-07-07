@@ -3,7 +3,7 @@ import {
   BeforeUpdate,
   Column,
   Entity,
-  ManyToMany,
+  ManyToOne,
   OneToMany,
 } from 'typeorm';
 import { TaskEntity } from './task.entity';
@@ -18,7 +18,13 @@ export class ColumnEntity extends BaseEntityCustom {
   @Column({ default: 0 })
   totalTask: number;
 
-  @ManyToMany(() => TaskEntity, (task) => task.column)
+  @Column()
+  statusCode: string;
+
+  @Column()
+  index: number;
+
+  @OneToMany(() => TaskEntity, (task) => task.column)
   tasks: Promise<TaskEntity[]>;
 
   @BeforeInsert()
@@ -36,6 +42,6 @@ export class ColumnEntity extends BaseEntityCustom {
     }
   }
 
-  @OneToMany(() => TeamEntity, (team) => team.column)
+  @ManyToOne(() => TeamEntity, (team) => team.columns)
   team: Promise<TeamEntity>;
 }

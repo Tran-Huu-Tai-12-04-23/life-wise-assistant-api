@@ -52,6 +52,6 @@ export class UserEntity extends BaseEntityCustom {
   @JoinColumn({ name: 'teamId', referencedColumnName: 'id' })
   teams: Promise<TeamEntity[]>;
 
-  @ManyToMany(() => TaskEntity, (task) => task.lstMember)
+  @ManyToMany(() => TaskEntity, (task) => task.lstPersonInCharge)
   tasks: Promise<TaskEntity[]>;
 }

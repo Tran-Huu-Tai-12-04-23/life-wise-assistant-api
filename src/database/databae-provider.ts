@@ -6,7 +6,7 @@ export const databaseProvider = {
   useFactory: async () => {
     if (!dataSource.isInitialized) {
       await dataSource.initialize();
-      if (process.env.NODE_ENV !== 'development') {
+      if (process.env.NODE_ENV === 'development') {
         try {
           await dataSource.runMigrations();
         } catch (error) {

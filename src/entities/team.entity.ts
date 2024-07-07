@@ -4,7 +4,7 @@ import {
   JoinColumn,
   JoinTable,
   ManyToMany,
-  ManyToOne,
+  OneToMany,
 } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { BaseEntityCustom } from './base.entity';
@@ -24,11 +24,14 @@ export class TeamEntity extends BaseEntityCustom {
   @Column()
   tags: string;
 
+  @Column()
+  isWorkPlace: boolean;
+
   @ManyToMany(() => UserEntity, (user) => user.teams)
   @JoinTable()
   members: Promise<UserEntity[]>;
 
-  @ManyToOne(() => ColumnEntity, (column) => column.team)
-  @JoinColumn({ name: 'columnId', referencedColumnName: 'id' })
-  column: Promise<ColumnEntity[]>;
+  @OneToMany(() => ColumnEntity, (column) => column.team)
+  @JoinColumn({ name: 'teamId', referencedColumnName: 'id' })
+  columns: Promise<ColumnEntity[]>;
 }
