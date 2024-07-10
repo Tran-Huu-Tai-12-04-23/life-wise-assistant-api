@@ -38,7 +38,7 @@ export class TaskController {
   @Post()
   async addTaskToColumn(
     @Body() taskDTO: TaskDTO,
-    @CurrentUser() user: UserEntity,
+    @CurrentUser() user: UserDataDTO,
   ) {
     return await this.service.create(taskDTO, user);
   }

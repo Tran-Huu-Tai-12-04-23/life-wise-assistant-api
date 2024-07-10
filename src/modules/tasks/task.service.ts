@@ -28,7 +28,7 @@ export class TaskService {
 
   FRONT_END_LINK = this.configService.get<string>('FRONT_END_LINK');
 
-  async create(taskDTO: TaskDTO, user: UserEntity) {
+  async create(taskDTO: TaskDTO, user: UserDataDTO) {
     const column: any = await this.columnRepository.findOne({
       where: { id: taskDTO.columnId },
       relations: { tasks: true },
@@ -66,6 +66,19 @@ export class TaskService {
     newTask.status = column.statusCode;
 
     const task = await this.taskRepository.save(newTask);
+
+    const taskLog: TaskLogDTO = {
+      taskName: task.title,
+      memberName: user.userDetail?.fullName || user.username,
+      link: this.FRONT_END_LINK + '/tasks/' + task.id,
+      statusName: task.status,
+      message:
+        user.userDetail?.fullName ||
+        user.username + ' create new task at ' + new Date().toString(),
+      timeString: new Date().toString(),
+    };
+
+    await this.discordService.taskLog(taskLog);
 
     const taskDetail: any = await this.taskRepository.findOne({
       where: { id: task.id, isDeleted: false },
