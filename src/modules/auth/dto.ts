@@ -50,3 +50,32 @@ export class JwtPayloadDTO {
   public verifyAt: Date;
   public isActive: boolean;
 }
+
+export class UserDataDTO {
+  id: string;
+  username: string;
+  password: string;
+  avatar: string;
+  verifyAt: Date;
+  isActive: boolean;
+  role: string;
+  userDetail: UserDetailDTO;
+  createdAt: Date;
+  createdBy: string;
+  createdByName: string;
+  updatedAt: Date;
+  updatedBy: string;
+  deleteBy: string;
+  isDeleted: boolean;
+}
+
+export class UserDetailDTO {
+  fullName: string;
+  address: string;
+  phoneNumber: string;
+  email: string;
+  githubLink: string;
+  telegramLink: string;
+  facebookLink: string;
+  bio: string;
+}

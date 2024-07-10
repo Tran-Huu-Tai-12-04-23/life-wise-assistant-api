@@ -23,6 +23,7 @@ import {
   MoveTaskInTheSameColumnDTO,
   TaskDTO,
 } from './dto';
+import { UserDataDTO } from '../auth/dto';
 
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
@@ -59,7 +60,7 @@ export class TaskController {
   @Post('move-task-to-diff-column')
   async moveTaskToDiffCol(
     @Body() moveTaskToDiffCol: MoveTaskInAnotherColumnDTO,
-    @CurrentUser() user: UserEntity,
+    @CurrentUser() user: UserDataDTO,
   ) {
     return await this.service.moveTaskToAnotherColumn(moveTaskToDiffCol, user);
   }

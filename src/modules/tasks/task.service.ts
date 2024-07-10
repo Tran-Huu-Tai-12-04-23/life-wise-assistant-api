@@ -11,6 +11,10 @@ import {
   TaskDTO,
 } from './dto';
 import { enumData } from 'src/constants/enum-data';
+import { DiscordService } from '../discord/discord.service';
+import { TaskLogDTO } from '../discord/dto';
+import { UserDataDTO } from '../auth/dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class TaskService {
@@ -18,7 +22,11 @@ export class TaskService {
     private readonly taskRepository: TaskRepository,
     private readonly columnRepository: ColumnRepository,
     private readonly userRepository: UserRepository,
+    private readonly discordService: DiscordService,
+    private readonly configService: ConfigService,
   ) {}
+
+  FRONT_END_LINK = this.configService.get<string>('FRONT_END_LINK');
 
   async create(taskDTO: TaskDTO, user: UserEntity) {
     const column: any = await this.columnRepository.findOne({
@@ -123,7 +131,7 @@ export class TaskService {
   // move task in the another column and in the same team
   async moveTaskToAnotherColumn(
     moveTaskDTO: MoveTaskInAnotherColumnDTO,
-    user: UserEntity,
+    user: UserDataDTO,
   ) {
     const { taskCurrentIndex, taskNewIndex, columnIdFrom, columnIdTo } =
       moveTaskDTO;
@@ -181,6 +189,24 @@ export class TaskService {
         sourceTask.updatedBy = user.id;
         sourceTask.updatedAt = new Date();
 
+        const taskLog: TaskLogDTO = {
+          taskName: sourceTask.title,
+          memberName: user.userDetail?.fullName || user.username,
+          link: this.FRONT_END_LINK + '/tasks/' + sourceTask.id,
+          statusName: columnTo.statusCode,
+          message:
+            user.userDetail?.fullName ||
+            user.username +
+              '   ' +
+              ' moved task to ' +
+              columnTo.statusCode +
+              'at ' +
+              '    ' +
+              new Date().toString(),
+          timeString: new Date().toString(),
+        };
+
+        await this.discordService.taskLog(taskLog);
         // Save all updated tasks within the transaction
         await transactionalEntityManager.save([
           ...targetTasks,
