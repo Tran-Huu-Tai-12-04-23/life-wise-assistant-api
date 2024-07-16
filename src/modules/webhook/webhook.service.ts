@@ -47,7 +47,7 @@ export class WebHookService {
 
     try {
       switch (event) {
-        case 'deployment_status':
+        case 'workflow_job':
           {
             const deloyStatus = payload.deployment_status.state;
             const creator = payload.sender.login;
