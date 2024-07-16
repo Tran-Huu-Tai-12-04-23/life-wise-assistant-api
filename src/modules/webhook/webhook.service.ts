@@ -34,50 +34,41 @@ export class WebHookService {
       console.error('Invalid signature');
       throw new BadRequestException('Invalid signature');
     }
-    let event = '';
+    // const event = '';
     // Check if the webhook event is one of the events we're interested in
     // const allowedEvents = ['deployment_status', 'workflow_job']; //, 'pull_request', 'push'] //,'workflow_run', 'workflow_job']
     // if (!allowedEvents.includes(headers['x-github-event'] as string)) {
     //   // console.log(`Unsupported event type: ${headers['x-github-event']}`)
     //   return { success: false };
     // }
-    event = headers['x-github-event'] as string;
+    // event = headers['x-github-event'] as string;
 
     //#region xử lý data
-
-    switch (event) {
-      case 'workflow_job':
-        {
-          const deloyStatus = payload.deployment_status.state;
-          const creator = payload.sender.login;
-          // const description = payload.deployment_status.description;
-          const wfdisplay_title = payload.workflow_run.display_title;
-          const wfname = payload.workflow_run.name;
-          const repository = payload.repository.name;
-          const branch = payload.workflow_run.head_branch;
-          let stringNoti = `Dự án: ${repository}
+    const deloyStatus = payload.deployment_status.state;
+    const creator = payload.sender.login;
+    // const description = payload.deployment_status.description;
+    const wfdisplay_title = payload.workflow_run.display_title;
+    const wfname = payload.workflow_run.name;
+    const repository = payload.repository.name;
+    const branch = payload.workflow_run.head_branch;
+    let stringNoti = `Dự án: ${repository}
               Nhân viên: ${creator}
               Nhánh: ${branch}
               Commit: ${wfdisplay_title}`;
 
-          const stringStatus = `Tiến trình ${wfname} - ${deloyStatus}`;
-          stringNoti = `${stringNoti} - ${stringStatus}`;
+    const stringStatus = `Tiến trình ${wfname} - ${deloyStatus}`;
+    stringNoti = `${stringNoti} - ${stringStatus}`;
 
-          const buildLogDTO = new BuildLogDTO();
-          buildLogDTO.branch = branch;
-          buildLogDTO.link = payload.deployment_status.target_url;
-          buildLogDTO.message = stringNoti;
-          buildLogDTO.project = repository;
-          buildLogDTO.source = 'Github';
-          buildLogDTO.statusName = stringStatus;
-          buildLogDTO.employeeName = creator;
+    const buildLogDTO = new BuildLogDTO();
+    buildLogDTO.branch = branch;
+    buildLogDTO.link = payload.deployment_status.target_url;
+    buildLogDTO.message = stringNoti;
+    buildLogDTO.project = repository;
+    buildLogDTO.source = 'Github';
+    buildLogDTO.statusName = stringStatus;
+    buildLogDTO.employeeName = creator;
 
-          this.discordService.buildLog(buildLogDTO);
-        }
-        break;
-      default:
-        break;
-    }
+    this.discordService.buildLog(buildLogDTO);
 
     //#endregion
 
