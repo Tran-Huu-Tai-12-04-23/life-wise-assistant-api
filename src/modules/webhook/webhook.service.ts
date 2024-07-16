@@ -26,23 +26,8 @@ export class WebHookService {
 
   public async githubHook(@Req() req: Request, @Headers() headers: any) {
     const payload: any = req.body;
-    // const secret = process.env.WEBHOOK_SECRET // Your webhook secret here
-    const signature = headers['x-hub-signature-256'];
 
-    if (!this.verifySignature(payload, this.secret, signature)) {
-      console.error('Invalid signature');
-      return { success: false };
-    }
-    let event = '';
-    // Check if the webhook event is one of the events we're interested in
-    // const allowedEvents = ['deployment_status', 'workflow_job']; //, 'pull_request', 'push'] //,'workflow_run', 'workflow_job']
-    // if (!allowedEvents.includes(headers['x-github-event'] as string)) {
-    //   // console.log(`Unsupported event type: ${headers['x-github-event']}`)
-    //   return { success: false };
-    // }
-    event = headers['x-github-event'] as string;
-
-    return event;
+    return { message: payload };
     //#region xử lý data
 
     // try {
