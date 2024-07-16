@@ -13,17 +13,18 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/jwt.auth.guard';
-import { TaskService } from './task.service';
 import { UserEntity } from 'src/entities';
 import { CurrentUser } from 'src/helpers/decorators';
+import { UserDataDTO } from '../auth/dto';
+import { JwtAuthGuard } from '../auth/jwt.auth.guard';
 import {
   ChangeStatusTaskDTO,
   MoveTaskInAnotherColumnDTO,
   MoveTaskInTheSameColumnDTO,
   TaskDTO,
+  TaskPaginationDTO,
 } from './dto';
-import { UserDataDTO } from '../auth/dto';
+import { TaskService } from './task.service';
 
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
@@ -31,6 +32,16 @@ import { UserDataDTO } from '../auth/dto';
 @Controller('task')
 export class TaskController {
   constructor(private readonly service: TaskService) {}
+
+  @ApiOperation({
+    summary: 'Pagination for task',
+  })
+  @ApiResponse({ status: 201 })
+  @Post()
+  async pagination(@Body() taskPaginationDTO: TaskPaginationDTO) {
+    return await this.service.pagination(taskPaginationDTO);
+  }
+
   @ApiOperation({
     summary: 'Add task to column',
   })

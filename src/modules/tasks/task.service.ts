@@ -1,20 +1,21 @@
-import { ColumnRepository } from './../../repositories/column.repository';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { enumData } from 'src/constants/enum-data';
+import { UserEntity } from 'src/entities';
 import { TaskEntity } from 'src/entities/task.entity';
 import { TaskRepository, UserRepository } from 'src/repositories';
-import { UserEntity } from 'src/entities';
-import { Between, In, MoreThan } from 'typeorm';
+import { Between, In, Like, MoreThan } from 'typeorm';
+import { UserDataDTO } from '../auth/dto';
+import { DiscordService } from '../discord/discord.service';
+import { TaskLogDTO } from '../discord/dto';
+import { ColumnRepository } from './../../repositories/column.repository';
 import {
   ChangeStatusTaskDTO,
   MoveTaskInAnotherColumnDTO,
   MoveTaskInTheSameColumnDTO,
   TaskDTO,
+  TaskPaginationDTO,
 } from './dto';
-import { enumData } from 'src/constants/enum-data';
-import { DiscordService } from '../discord/discord.service';
-import { TaskLogDTO } from '../discord/dto';
-import { UserDataDTO } from '../auth/dto';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class TaskService {
@@ -27,6 +28,50 @@ export class TaskService {
   ) {}
 
   FRONT_END_LINK = this.configService.get<string>('FRONT_END_LINK');
+
+  async pagination(taskPaginationDTO: TaskPaginationDTO) {
+    const { status, teamId, columnId, userId, teamMemberId, search } =
+      taskPaginationDTO;
+
+    const whereCon: any = {};
+    if (status) {
+      whereCon.status = status;
+    }
+    if (teamId) {
+      whereCon.team = { id: teamId };
+    }
+    if (columnId) {
+      whereCon.column = { id: columnId };
+    }
+    if (userId) {
+      whereCon.createdBy = { id: userId };
+    }
+    if (teamMemberId) {
+      whereCon.lstPersonInCharge = { id: teamMemberId };
+    }
+    if (search) {
+      whereCon.title = Like(`%${search}%`);
+    }
+
+    const tasks: any = await this.taskRepository.findAndCount({
+      where: { ...whereCon, isDeleted: false },
+      order: { index: 'ASC' },
+      relations: { lstPersonInCharge: true },
+      skip: taskPaginationDTO.skip,
+      take: taskPaginationDTO.take,
+    });
+
+    const resultTask = tasks[0].map((task: any) => {
+      const lstPersonInCharge = task.__lstPersonInCharge__;
+      delete task.__lstPersonInCharge__;
+      return {
+        lstPersonInCharge,
+        ...task,
+      };
+    });
+
+    return [resultTask, tasks[1]];
+  }
 
   async create(taskDTO: TaskDTO, user: UserDataDTO) {
     const column: any = await this.columnRepository.findOne({

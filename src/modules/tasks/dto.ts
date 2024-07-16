@@ -1,11 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsString,
-  IsNotEmpty,
-  IsOptional,
   IsArray,
+  IsNotEmpty,
   IsNumber,
+  IsOptional,
+  IsString,
 } from 'class-validator';
+import { PaginationDTO } from '../dto';
 
 export class TaskDTO {
   @ApiProperty({ description: 'Task title' })
@@ -99,4 +100,36 @@ export class MoveTaskInAnotherColumnDTO {
   @IsNotEmpty()
   @IsString()
   columnIdTo: string;
+}
+
+export class TaskPaginationDTO extends PaginationDTO {
+  @ApiProperty({ description: 'Task status' })
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @ApiProperty({ description: 'Team id' })
+  @IsOptional()
+  @IsString()
+  teamId?: string;
+
+  @ApiProperty({ description: 'Column id' })
+  @IsOptional()
+  @IsString()
+  columnId?: string;
+
+  @ApiProperty({ description: 'User id' })
+  @IsOptional()
+  @IsString()
+  userId?: string;
+
+  @ApiProperty({ description: 'User id' })
+  @IsOptional()
+  @IsString()
+  teamMemberId?: string;
+
+  @ApiProperty({ description: 'User id' })
+  @IsOptional()
+  @IsString()
+  search?: string;
 }

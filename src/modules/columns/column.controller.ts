@@ -13,10 +13,10 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ColumnService } from './column.service';
-import { JwtAuthGuard } from '../auth/jwt.auth.guard';
-import { CurrentUser } from 'src/helpers/decorators';
 import { UserEntity } from 'src/entities';
+import { CurrentUser } from 'src/helpers/decorators';
+import { JwtAuthGuard } from '../auth/jwt.auth.guard';
+import { ColumnService } from './column.service';
 import { ColumnDTO, GetAllColumnsDTO, SwapColDTO } from './dto';
 
 @UseGuards(JwtAuthGuard)
