@@ -4,8 +4,8 @@ import { WebHookController } from './webhook.controller';
 import { WebHookService } from './webhook.service';
 
 @Module({
-  imports: [DiscordService],
-  providers: [WebHookService],
+  imports: [],
+  providers: [WebHookService, DiscordService],
   controllers: [WebHookController],
   exports: [WebHookService],
 })
