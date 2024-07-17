@@ -37,7 +37,7 @@ export class TaskController {
     summary: 'Pagination for task',
   })
   @ApiResponse({ status: 201 })
-  @Post()
+  @Post('/pagination')
   async pagination(@Body() taskPaginationDTO: TaskPaginationDTO) {
     return await this.service.pagination(taskPaginationDTO);
   }
