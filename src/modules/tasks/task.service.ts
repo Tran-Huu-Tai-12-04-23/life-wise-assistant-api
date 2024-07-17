@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { enumData } from 'src/constants/enum-data';
 import { UserEntity } from 'src/entities';
 import { TaskEntity } from 'src/entities/task.entity';
+import { coreHelper } from 'src/helpers';
 import { TaskRepository, UserRepository } from 'src/repositories';
 import { Between, In, Like, MoreThan } from 'typeorm';
 import { UserDataDTO } from '../auth/dto';
@@ -64,9 +65,21 @@ export class TaskService {
     const resultTask = tasks[0].map((task: any) => {
       const lstPersonInCharge = task.__lstPersonInCharge__;
       delete task.__lstPersonInCharge__;
+      const statusOfTask = coreHelper.getStatusOfTask(task.status);
+      const priorityOfTask = coreHelper.getPriorityOfTask(task.priority);
+      const typeOfTask = coreHelper.getPriorityOfTask(task.type);
       return {
         lstPersonInCharge,
         ...task,
+        statusName: statusOfTask?.name,
+        statusColor: statusOfTask?.color,
+        statusBackground: statusOfTask?.background,
+        priorityName: priorityOfTask?.name,
+        priorityColor: priorityOfTask?.color,
+        priorityBackground: priorityOfTask?.background,
+        typeName: typeOfTask?.name,
+        typeColor: typeOfTask?.color,
+        typeBackground: typeOfTask?.background,
       };
     });
 
