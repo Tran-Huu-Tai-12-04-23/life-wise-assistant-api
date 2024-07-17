@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { BuildLogDTO, TaskLogDTO } from './dto';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { BuildLogDTO, TaskLogDTO } from './dto';
 
 @Injectable()
 export class DiscordService {
@@ -12,10 +12,11 @@ export class DiscordService {
   BUILD_LOG = this.configService.get<string>('BUILD_LOG') || '';
 
   async buildLog(buildLogDTO: BuildLogDTO) {
+    console.log(buildLogDTO);
     await axios.post(this.BUILD_LOG, {
       embeds: [
         {
-          title: 'Notification build log at ' + new Date().toLocaleDateString(),
+          title: 'Notification build log at ' + new Date().toLocaleString(),
           fields: [
             { name: 'Project', value: buildLogDTO.project },
             { name: 'Source', value: buildLogDTO.source },
@@ -24,7 +25,11 @@ export class DiscordService {
             { name: 'Message', value: buildLogDTO.message },
             { name: 'Status', value: buildLogDTO.statusName },
           ],
-          color: 0x0099ff, // Blue color
+          color: 0x0099ff,
+        },
+        {
+          title: 'Check it!',
+          url: buildLogDTO.link,
         },
       ],
     });

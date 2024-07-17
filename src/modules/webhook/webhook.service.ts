@@ -51,6 +51,7 @@ export class WebHookService {
     const wfdisplay_title = payload[event].display_title;
     const wfname = payload[event].name;
     const repository = payload.repository.name;
+    const source = payload.repository.url;
     const branch = payload[event].head_branch;
     let stringNoti = `Dự án: ${repository}
               Nhân viên: ${creator}
@@ -62,14 +63,14 @@ export class WebHookService {
 
     const buildLogDTO = new BuildLogDTO();
     buildLogDTO.branch = branch;
-    buildLogDTO.link = payload.deployment_status.target_url;
+    buildLogDTO.link = source;
     buildLogDTO.message = stringNoti;
     buildLogDTO.project = repository;
-    buildLogDTO.source = repository.url;
+    buildLogDTO.source = source;
     buildLogDTO.statusName = stringStatus;
     buildLogDTO.employeeName = creator;
 
-    this.discordService.buildLog(buildLogDTO);
+    await this.discordService.buildLog(buildLogDTO);
 
     //#endregion
 
