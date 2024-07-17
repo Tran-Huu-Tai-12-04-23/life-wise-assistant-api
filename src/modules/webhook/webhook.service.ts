@@ -34,23 +34,24 @@ export class WebHookService {
       console.error('Invalid signature');
       throw new BadRequestException('Invalid signature');
     }
-    // const event = '';
+    let event = '';
     // Check if the webhook event is one of the events we're interested in
-    // const allowedEvents = ['deployment_status', 'workflow_job']; //, 'pull_request', 'push'] //,'workflow_run', 'workflow_job']
-    // if (!allowedEvents.includes(headers['x-github-event'] as string)) {
-    //   // console.log(`Unsupported event type: ${headers['x-github-event']}`)
-    //   return { success: false };
-    // }
-    // event = headers['x-github-event'] as string;
+    const allowedEvents = ['workflow_run', 'workflow_job']; //, 'pull_request', 'push'] //,'workflow_run', 'workflow_job']
+    if (!allowedEvents.includes(headers['x-github-event'] as string)) {
+      // console.log(`Unsupported event type: ${headers['x-github-event']}`)
+      return { success: false };
+    }
+    event = headers['x-github-event'] as string;
 
     //#region xử lý data
-    const deloyStatus = payload.deployment_status.state;
+    const deloyStatus = payload[event].state;
+
     const creator = payload.sender.login;
     // const description = payload.deployment_status.description;
-    const wfdisplay_title = payload.workflow_run.display_title;
-    const wfname = payload.workflow_run.name;
+    const wfdisplay_title = payload[event].display_title;
+    const wfname = payload[event].name;
     const repository = payload.repository.name;
-    const branch = payload.workflow_run.head_branch;
+    const branch = payload[event].head_branch;
     let stringNoti = `Dự án: ${repository}
               Nhân viên: ${creator}
               Nhánh: ${branch}
@@ -64,7 +65,7 @@ export class WebHookService {
     buildLogDTO.link = payload.deployment_status.target_url;
     buildLogDTO.message = stringNoti;
     buildLogDTO.project = repository;
-    buildLogDTO.source = 'Github';
+    buildLogDTO.source = repository.url;
     buildLogDTO.statusName = stringStatus;
     buildLogDTO.employeeName = creator;
 
