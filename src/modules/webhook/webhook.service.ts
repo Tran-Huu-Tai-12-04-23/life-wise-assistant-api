@@ -44,7 +44,7 @@ export class WebHookService {
     event = headers['x-github-event'] as string;
 
     //#region xử lý data
-    const deloyStatus = payload[event].state;
+    const deloyStatus = payload[event].status;
 
     const creator = payload.sender.login;
     // const description = payload.deployment_status.description;
