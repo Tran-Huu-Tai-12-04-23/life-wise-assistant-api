@@ -1,17 +1,18 @@
+import { compare, hash } from 'bcrypt';
 import {
-  Entity,
-  Column,
   BeforeInsert,
   BeforeUpdate,
-  OneToOne,
+  Column,
+  Entity,
   JoinColumn,
   ManyToMany,
+  OneToOne,
 } from 'typeorm';
-import { compare, hash } from 'bcrypt';
-import { UserDetailEntity } from './userDetail.entity';
-import { TeamEntity } from './team.entity';
-import { TaskEntity } from './task.entity';
 import { BaseEntityCustom } from './base.entity';
+import { GroupChatEntity } from './group-chat.entity';
+import { TaskEntity } from './task.entity';
+import { TeamEntity } from './team.entity';
+import { UserDetailEntity } from './userDetail.entity';
 @Entity(`Users`)
 export class UserEntity extends BaseEntityCustom {
   @Column({ length: 500 })
@@ -54,4 +55,7 @@ export class UserEntity extends BaseEntityCustom {
 
   @ManyToMany(() => TaskEntity, (task) => task.lstPersonInCharge)
   tasks: Promise<TaskEntity[]>;
+
+  @ManyToMany(() => GroupChatEntity, (gr) => gr.lstMember)
+  lstGroupChat: Promise<GroupChatEntity[]>;
 }
