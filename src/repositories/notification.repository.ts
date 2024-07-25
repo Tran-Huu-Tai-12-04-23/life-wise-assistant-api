@@ -1,4 +1,4 @@
-import { NotificationEntity } from 'src/entities/notification';
+import { NotificationEntity } from 'src/entities/notification.entity';
 import { CustomRepository } from 'src/typeorm/typeorm-decorater';
 import { Repository } from 'typeorm';
 

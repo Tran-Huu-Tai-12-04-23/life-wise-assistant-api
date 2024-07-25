@@ -6,10 +6,13 @@ import {
   Entity,
   JoinColumn,
   ManyToMany,
+  ManyToOne,
   OneToOne,
 } from 'typeorm';
 import { BaseEntityCustom } from './base.entity';
-import { GroupChatEntity } from './group-chat.entity';
+import { DeviceEntity } from './device.entity';
+import { GroupChatEntity } from './groupChat.entity';
+import { NotificationEntity } from './notification.entity';
 import { TaskEntity } from './task.entity';
 import { TeamEntity } from './team.entity';
 import { UserDetailEntity } from './userDetail.entity';
@@ -58,4 +61,11 @@ export class UserEntity extends BaseEntityCustom {
 
   @ManyToMany(() => GroupChatEntity, (gr) => gr.lstMember)
   lstGroupChat: Promise<GroupChatEntity[]>;
+
+  @ManyToOne(() => NotificationEntity, (noti) => noti.user)
+  notifications: Promise<NotificationEntity[]>;
+
+  @OneToOne(() => DeviceEntity, (pr) => pr.user)
+  @JoinColumn()
+  device: Promise<DeviceEntity>;
 }

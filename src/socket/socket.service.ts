@@ -2,17 +2,18 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
-import { DeviceEntity } from 'src/entities/device';
-import { UserRepository } from 'src/repositories';
+import { DeviceEntity } from 'src/entities/device.entity';
+import { DeviceRepository, UserRepository } from 'src/repositories';
 
 @Injectable()
 export class SocketService {
   private server: Server;
-  private connectedClients = new Map<string, DeviceEntity>();
+  private connectedClients = new Array<DeviceEntity>();
   constructor(
     private jwtService: JwtService,
     private configService: ConfigService,
     private userRepo: UserRepository,
+    private deviceRepo: DeviceRepository,
   ) {}
 
   JWT_SECRET = this.configService.get<string>('JWT_SECRET');
@@ -24,10 +25,13 @@ export class SocketService {
       // Handle incoming events
       socket.on('chat message', (message: string) => {
         console.log(`Message from ${socket.id}: ${message}`);
-        this.server.emit('chat message', message); // Broadcast message to all clients
-      });
 
-      // Handle disconnection
+        this.connectedClients.forEach((item) => {
+          if (item.socketId !== socket.id) {
+            this.server.to(item.socketId).emit('chat message', message);
+          }
+        });
+      });
       socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
       });
@@ -50,16 +54,27 @@ export class SocketService {
         throw new Error('Invalid token');
       }
       const user = await this.getUserById(payload.uid);
-      console.log(user);
 
-      console.log(`Client connected: ${client.id}`);
+      if (!user) throw new NotFoundException('User not found');
+
+      const deviceClient = new DeviceEntity();
+      deviceClient.socketId = client.id;
+      deviceClient.status = false;
+      deviceClient.user = Promise.resolve(user);
+      deviceClient.type = 'CHAT';
+      this.connectedClients.push(deviceClient);
     } catch (error) {
       console.log(error);
     }
   }
 
-  disconnect(client: Socket) {
-    console.log(`Client disconnected: ${client.id}`);
+  async disconnect(client: Socket) {
+    const deviceClient = await this.deviceRepo.findOneBy({
+      socketId: client.id,
+    });
+    if (deviceClient) {
+      this.connectedClients.filter((item) => item.socketId !== client.id);
+    }
   }
 
   async getUserById(id: string) {

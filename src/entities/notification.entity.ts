@@ -1,6 +1,5 @@
 import { IsString } from 'class-validator';
-import { enumData } from 'src/constants/enum-data';
-import { Column, Entity, OneToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToMany } from 'typeorm';
 import { BaseEntityCustom } from './base.entity';
 import { UserEntity } from './user.entity';
 
@@ -16,12 +15,13 @@ export class NotificationEntity extends BaseEntityCustom {
 
   @Column()
   @IsString()
-  type: keyof typeof enumData.NOTIFICATION_TYPE;
+  type: string;
 
   @Column({ default: false })
   @IsString()
   isRead: boolean;
 
-  @OneToOne(() => UserEntity)
-  userTarget: Promise<UserEntity>;
+  @OneToMany(() => UserEntity, (user) => user.notifications)
+  @JoinColumn()
+  user: Promise<UserEntity>;
 }

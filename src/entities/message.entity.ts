@@ -1,17 +1,11 @@
 import { IsString } from 'class-validator';
-import {
-  BaseEntity,
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToOne,
-} from 'typeorm';
-import { GroupChatEntity } from './group-chat.entity';
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import { BaseEntityCustom } from './base.entity';
+import { GroupChatEntity } from './groupChat.entity';
 import { UserEntity } from './user.entity';
 
 @Entity(`Messages`)
-export class MessageEntity extends BaseEntity {
+export class MessageEntity extends BaseEntityCustom {
   @Column()
   @IsString()
   content: string;
@@ -25,5 +19,6 @@ export class MessageEntity extends BaseEntity {
   isRead: boolean;
 
   @ManyToOne(() => GroupChatEntity, (groupChat) => groupChat.messages)
+  @JoinColumn()
   groupChat: Promise<GroupChatEntity>;
 }

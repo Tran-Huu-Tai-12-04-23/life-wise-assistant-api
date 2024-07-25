@@ -1,10 +1,11 @@
 import { IsBoolean, IsString } from 'class-validator';
-import { Column, Entity, ManyToMany, OneToMany } from 'typeorm';
-import { MessageEntity } from './message';
+import { Column, Entity, JoinColumn, ManyToMany, OneToMany } from 'typeorm';
+import { BaseEntityCustom } from './base.entity';
+import { MessageEntity } from './message.entity';
 import { UserEntity } from './user.entity';
 
 @Entity(`GroupChats`)
-export class GroupChatEntity {
+export class GroupChatEntity extends BaseEntityCustom {
   @Column()
   @IsString()
   type: string;
@@ -18,9 +19,10 @@ export class GroupChatEntity {
   socketId: string;
 
   @ManyToMany(() => UserEntity, (user) => user.lstGroupChat)
-  @Column()
+  @JoinColumn()
   lstMember: Promise<UserEntity[]>;
 
   @OneToMany(() => MessageEntity, (message) => message.groupChat)
+  @JoinColumn()
   messages: Promise<MessageEntity[]>;
 }

@@ -1,4 +1,4 @@
-import { GroupChatEntity } from 'src/entities/group-chat.entity';
+import { GroupChatEntity } from 'src/entities/groupChat.entity';
 import { CustomRepository } from 'src/typeorm/typeorm-decorater';
 import { Repository } from 'typeorm';
 
