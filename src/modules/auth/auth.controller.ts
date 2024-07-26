@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post,Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import {
@@ -12,6 +12,7 @@ import { CurrentUser } from 'src/helpers/decorators';
 import { JwtAuthGuard } from './jwt.auth.guard';
 import { PaginationDTO } from '../dto';
 import { enumData } from 'src/constants/enum-data';
+import { passport, secretKey } from './auth.passport';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -57,6 +58,53 @@ export class AuthController {
   @Post('sign-up')
   async signUp(@Body() signupDTO: SignUpDTO) {
     return await this.service.signUp(signupDTO);
+  }
+
+  @ApiOperation({
+    summary: 'Login with github',
+  })
+  @Post('github')
+  async githubAuth(@Req() req: Request, @Res() res: Response) {
+    passport.authenticate('github', { scope: ['user:email'] })(req, res);
+  }
+
+  @Get('github/authorized')
+  async githubAuthCallback(@Req() req: Request, @Res() res: Response) {
+    passport.authenticate('github', { failureRedirect: '/' }, async (err: Error, user: any) => {
+      if (err || !user) {
+        return { status: 404};
+      }
+      const signupDTO = await this.service.convertJsonGitHubToSignUpDTO(user);
+      // If the user exists, then login
+      if(await this.service.checkUserExist(signupDTO.username)){
+        const signInDto = await this.service.convertSignUpDTOToSignInDTO(signupDTO);
+        return await this.service.signIn(signInDto);
+      }
+      // Else sign up
+      return await this.service.signUp(signupDTO);
+    })(req, res);
+  }
+
+  @Post('google')
+  async googleAuth(@Req() req: Request, @Res() res: Response) {
+    passport.authenticate('google', { scope: ['profile', 'email'] })(req, res);
+  }
+
+  @Get('google/callback')
+  async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
+    passport.authenticate('google', { failureRedirect: '/' }, async (err: Error, user: any) => {
+      if (err || !user) {
+        return { status: 404};
+      }
+      const signupDTO = await this.service.convertJsonGoogleToSignUpDTO(user);
+      // If the user exists, then login
+      if(await this.service.checkUserExist(signupDTO.username)){
+        const signInDto = await this.service.convertSignUpDTOToSignInDTO(signupDTO);
+        return await this.service.signIn(signInDto);
+      }
+      // Else sign up
+      return await this.service.signUp(signupDTO);
+    })(req, res);
   }
 
   @ApiOperation({

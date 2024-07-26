@@ -16,6 +16,7 @@ import { JWT_SECRET } from 'src/constants/key';
 import { UserEntity } from 'src/entities';
 import { Like, Not } from 'typeorm';
 import { PaginationDTO } from '../dto';
+import { passport, secretKey } from './auth.passport';
 
 @Injectable()
 export class AuthService {
@@ -23,6 +24,8 @@ export class AuthService {
     private repo: UserRepository,
     private jwtService: JwtService,
   ) {}
+  
+
   async signIn(signInDto: SignInDTO) {
     const user = await this.repo.findOneBy({ username: signInDto.username });
 
@@ -50,6 +53,7 @@ export class AuthService {
 
     return { accessToken, refreshToken };
   }
+
   async signUp(signUpDTO: SignUpDTO) {
     if (await this.repo.findOneBy({ username: signUpDTO.username })) {
       throw new UnauthorizedException('User already exists!');
@@ -67,6 +71,37 @@ export class AuthService {
     newUser.isActive = true;
     newUser.verifyAt = new Date();
     return await this.repo.insert(newUser);
+  }
+
+  async convertJsonGitHubToSignUpDTO(jsonData: any) {
+    const signUpDTO = new SignUpDTO();
+    signUpDTO.username = jsonData.emails[0].value;
+    signUpDTO.password = jsonData.username;  
+    signUpDTO.confirmPassword = jsonData.username;  
+
+    return signUpDTO;
+  }
+
+  async convertJsonGoogleToSignUpDTO(jsonData: any) {
+    const signUpDTO = new SignUpDTO();
+    signUpDTO.username = jsonData.emails[0].value;
+    signUpDTO.password = jsonData.displayName;  
+    signUpDTO.confirmPassword = jsonData.displayName;  
+
+    return signUpDTO;
+  }
+
+  async convertSignUpDTOToSignInDTO(signUpDTO: SignUpDTO) {
+    const signInDTO = new SignInDTO();
+    signInDTO.username = signUpDTO.username;
+    signInDTO.password = signUpDTO.password;  
+
+    return signInDTO;
+  }
+
+  async checkUserExist(username: string): Promise<boolean> {
+    const user = await this.repo.findOneBy({ username });
+    return !!user;
   }
 
   async refreshToken(data: RefreshTokenDTO) {
