@@ -1,10 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import {
-  DeviceRepository,
-  NotificationRepository,
-  UserRepository,
-} from 'src/repositories';
+import { NotificationRepository, UserRepository } from 'src/repositories';
 import { GroupChatRepository } from 'src/repositories/groupchat.repository';
 import { MessageRepository } from 'src/repositories/message.repository';
 import { TypeOrmExModule } from 'src/typeorm';
@@ -18,7 +14,6 @@ import { SocketService } from './socket.service';
       NotificationRepository,
       MessageRepository,
       GroupChatRepository,
-      DeviceRepository,
     ]),
   ],
   providers: [SocketService, JwtService, SocketGateway],

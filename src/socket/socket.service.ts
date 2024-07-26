@@ -2,18 +2,17 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
-import { DeviceEntity } from 'src/entities/device.entity';
-import { DeviceRepository, UserRepository } from 'src/repositories';
+import { UserRepository } from 'src/repositories';
+import { Device } from './device';
 
 @Injectable()
 export class SocketService {
   private server: Server;
-  private connectedClients = new Array<DeviceEntity>();
+  private connectedClients = new Array<any>();
   constructor(
     private jwtService: JwtService,
     private configService: ConfigService,
     private userRepo: UserRepository,
-    private deviceRepo: DeviceRepository,
   ) {}
 
   JWT_SECRET = this.configService.get<string>('JWT_SECRET');
@@ -21,11 +20,10 @@ export class SocketService {
   public init(server: Server) {
     this.server = server;
     this.server.on('connection', (socket: Socket) => {
-      console.log(`Client connected: ${socket.id}`);
+      // console.log(`Client connected: ${socket.id}`);
       // Handle incoming events
       socket.on('chat message', (message: string) => {
         console.log(`Message from ${socket.id}: ${message}`);
-
         this.connectedClients.forEach((item) => {
           if (item.socketId !== socket.id) {
             this.server.to(item.socketId).emit('chat message', message);
@@ -57,10 +55,10 @@ export class SocketService {
 
       if (!user) throw new NotFoundException('User not found');
 
-      const deviceClient = new DeviceEntity();
+      const deviceClient = new Device();
       deviceClient.socketId = client.id;
       deviceClient.status = false;
-      deviceClient.user = Promise.resolve(user);
+      deviceClient.user = user;
       deviceClient.type = 'CHAT';
       this.connectedClients.push(deviceClient);
     } catch (error) {
@@ -69,12 +67,9 @@ export class SocketService {
   }
 
   async disconnect(client: Socket) {
-    const deviceClient = await this.deviceRepo.findOneBy({
-      socketId: client.id,
-    });
-    if (deviceClient) {
-      this.connectedClients.filter((item) => item.socketId !== client.id);
-    }
+    this.connectedClients = this.connectedClients.filter(
+      (item) => item.socketId !== client.id,
+    );
   }
 
   async getUserById(id: string) {

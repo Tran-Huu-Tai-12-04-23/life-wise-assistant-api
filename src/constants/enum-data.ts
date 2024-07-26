@@ -134,3 +134,13 @@ export const enumData = {
     },
   },
 };
+
+export enum EHistoryType {
+  CREATE_GROUP_CHAT = 'CREATE_GROUP_CHAT',
+  CREATE_CHAT = 'CREATE_CHAT',
+}
+
+export enum EChatType {
+  GROUP = 'group',
+  SINGLE = 'single',
+}

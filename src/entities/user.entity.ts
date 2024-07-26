@@ -7,10 +7,10 @@ import {
   JoinColumn,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   OneToOne,
 } from 'typeorm';
 import { BaseEntityCustom } from './base.entity';
-import { DeviceEntity } from './device.entity';
 import { GroupChatEntity } from './groupChat.entity';
 import { NotificationEntity } from './notification.entity';
 import { TaskEntity } from './task.entity';
@@ -65,7 +65,7 @@ export class UserEntity extends BaseEntityCustom {
   @ManyToOne(() => NotificationEntity, (noti) => noti.user)
   notifications: Promise<NotificationEntity[]>;
 
-  @OneToOne(() => DeviceEntity, (pr) => pr.user)
+  @OneToMany(() => GroupChatEntity, (gr) => gr.owner)
   @JoinColumn()
-  device: Promise<DeviceEntity>;
+  lstGroupChatIsOwner: Promise<GroupChatEntity[]>;
 }
