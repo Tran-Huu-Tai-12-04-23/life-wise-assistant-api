@@ -5,6 +5,7 @@ import {
   Column,
   Entity,
   JoinColumn,
+  JoinTable,
   ManyToMany,
   ManyToOne,
   OneToMany,
@@ -66,6 +67,6 @@ export class UserEntity extends BaseEntityCustom {
   notifications: Promise<NotificationEntity[]>;
 
   @OneToMany(() => GroupChatEntity, (gr) => gr.owner)
-  @JoinColumn()
+  @JoinTable()
   lstGroupChatIsOwner: Promise<GroupChatEntity[]>;
 }

@@ -63,53 +63,66 @@ export class ChatService {
     const groupChatExist: any = await this.groupChatRepo.findOne({
       where: {
         lstMember: {
-          id: In([userTargetId]),
+          id: In([userTargetId, user.id]),
         },
+        type: EChatType.SINGLE,
       },
-      // relations: {
-      //   lstMember: true,
-      // },
+      relations: {
+        lstMember: true,
+      },
+    });
+    if (groupChatExist) {
+      const isExist = groupChatExist.__lstMember__.find(
+        (us: { id: string }) => us.id === userTargetId,
+      );
+
+      if (isExist) {
+        throw new Error('User already in group chat');
+      }
+    }
+
+    const groupChatEntity = new GroupChatEntity();
+    groupChatEntity.name = userTargetId;
+    groupChatEntity.type = EChatType.SINGLE;
+    groupChatEntity.owner = Promise.resolve(user);
+
+    const lstUser = await this.userRepo.find({
+      where: {
+        id: In([userTargetId, user.id]),
+        isDeleted: false,
+      },
+    });
+    groupChatEntity.lstMember = Promise.resolve(lstUser);
+    groupChatEntity.createdBy = user.id;
+    groupChatEntity.createdByName = user.username;
+    groupChatEntity.createdAt = new Date();
+
+    await this.groupChatRepo.save(groupChatEntity);
+    const receiver: any = await this.userRepo.findOne({
+      where: { id: userTargetId },
+      relations: {
+        userDetail: true,
+      },
     });
 
-    console.log(groupChatExist);
+    const history = new CreateHistoryDTO();
+    history.content = `${user.username} created chat with ${receiver.username}`;
+    history.type = EHistoryType.CREATE_CHAT;
+    history.targetActionId = groupChatEntity.id;
+    await this.commonService.createHistory(user, history);
 
-    // if (groupChatExist) {
-    //   const isExist = groupChatExist.__lstMember__.find(
-    //     (us: { id: string }) => us.id === user.id,
-    //   );
-
-    //   if (isExist) {
-    //     throw new Error('User already in group chat');
-    //   }
-    // }
-
-    // const groupChatEntity = new GroupChatEntity();
-    // groupChatEntity.name = userTargetId;
-    // groupChatEntity.type = EChatType.SINGLE;
-    // groupChatEntity.owner = Promise.resolve(user);
-
-    // const lstUser = await this.userRepo.find({
-    //   where: {
-    //     id: In([userTargetId, user.id]),
-    //     isDeleted: false,
-    //   },
-    // });
-    // groupChatEntity.lstMember = Promise.resolve(lstUser);
-    // groupChatEntity.createdBy = user.id;
-    // groupChatEntity.createdByName = user.username;
-    // groupChatEntity.createdAt = new Date();
-
-    // await this.groupChatRepo.save(groupChatEntity);
-
-    // const history = new CreateHistoryDTO();
-    // history.content = `${user.username} created chat with ${userTargetId}`;
-    // history.type = EHistoryType.CREATE_CHAT;
-    // history.targetActionId = groupChatEntity.id;
-    // await this.commonService.createHistory(user, history);
-
+    const userDetail = receiver.__userDetail__;
+    delete receiver.__userDetail__;
     return {
       message: 'Create chat successfully!',
-      // data: groupChatEntity,
+      data: {
+        ...groupChatEntity,
+        receiver: {
+          ...receiver,
+          userDetail,
+        },
+        isSingleChat: true,
+      },
     };
   }
 }

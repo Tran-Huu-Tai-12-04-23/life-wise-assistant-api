@@ -3,6 +3,7 @@ import {
   Column,
   Entity,
   JoinColumn,
+  JoinTable,
   ManyToMany,
   ManyToOne,
   OneToMany,
@@ -29,12 +30,8 @@ export class GroupChatEntity extends BaseEntityCustom {
   @JoinColumn()
   owner: Promise<UserEntity>;
 
-  @Column()
-  @IsString()
-  socketId: string;
-
   @ManyToMany(() => UserEntity, (user) => user.lstGroupChat)
-  @JoinColumn()
+  @JoinTable()
   lstMember: Promise<UserEntity[]>;
 
   @OneToMany(() => MessageEntity, (message) => message.groupChat)
