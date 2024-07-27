@@ -8,7 +8,8 @@ import { MessageRepository } from 'src/repositories/message.repository';
 import { In } from 'typeorm';
 import { CommonService } from '../common/common.service';
 import { CreateHistoryDTO } from '../common/dto';
-import { CreateChatDTO, CreateGroupChatDTO } from './dto';
+import { PaginationDTO } from '../dto';
+import { CreateChatDTO, CreateGroupChatDTO, FilterGroupData } from './dto';
 
 @Injectable()
 export class ChatService {
@@ -124,5 +125,54 @@ export class ChatService {
         isSingleChat: true,
       },
     };
+  }
+
+  async groupChatPagination(
+    user: UserEntity,
+    body: PaginationDTO<FilterGroupData>,
+  ) {
+    const whereCon: any = {
+      isDeleted: false,
+    };
+    if (body?.where?.name) {
+      whereCon.name = body?.where?.name;
+    }
+
+    const groupChat: any = await this.groupChatRepo.findAndCount({
+      where: whereCon,
+      order: {
+        updatedAt: 'DESC',
+      },
+      skip: body.skip,
+      take: body.take,
+      relations: {
+        lstMember: true,
+        owner: true,
+      },
+    });
+
+    const res = groupChat[0].map((item: any) => {
+      const lstMember = item.__lstMember__;
+      const owner = item.__owner__;
+      delete item.__owner__;
+      delete item.__lstMember__;
+      const isSingleChat = item.type === EChatType.SINGLE;
+      const isGroupChat = item.type === EChatType.GROUP;
+
+      const receiver = lstMember.filter(
+        (us: { id: string }) => us.id !== user.id,
+      );
+
+      return {
+        ...item,
+        lstMember,
+        receiver: receiver?.length > 0 ? receiver[0] : null,
+        owner,
+        isSingleChat,
+        isGroupChat,
+      };
+    });
+
+    return [res, groupChat[1]];
   }
 }

@@ -3,8 +3,9 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserEntity } from 'src/entities';
 import { CurrentUser } from 'src/helpers/decorators';
 import { JwtAuthGuard } from '../auth/jwt.auth.guard';
+import { PaginationDTO } from '../dto';
 import { ChatService } from './chat.service';
-import { CreateChatDTO, CreateGroupChatDTO } from './dto';
+import { CreateChatDTO, CreateGroupChatDTO, FilterGroupData } from './dto';
 
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
@@ -40,5 +41,18 @@ export class ChatController {
     @Body() createChatDTO: CreateChatDTO,
   ) {
     return await this.service.createNewChat(user, createChatDTO);
+  }
+
+  @ApiOperation({
+    summary: 'Get lst group chat',
+  })
+  @Post('group-chat-pagination')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async getLstGroupChatPagination(
+    @CurrentUser() user: UserEntity,
+    @Body() body: PaginationDTO<FilterGroupData>,
+  ) {
+    return await this.service.groupChatPagination(user, body);
   }
 }

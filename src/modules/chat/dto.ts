@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNotEmpty, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateGroupChatDTO {
   @ApiProperty({ description: 'Group name' })
@@ -19,4 +19,11 @@ export class CreateChatDTO {
   @IsNotEmpty()
   @IsString()
   userTargetId: string;
+}
+
+export class FilterGroupData {
+  @ApiProperty({ description: 'group name ' })
+  @IsOptional()
+  @IsString()
+  name: string;
 }
