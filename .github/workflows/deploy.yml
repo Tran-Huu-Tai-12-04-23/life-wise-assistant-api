@@ -1,3 +1,4 @@
+
 name: Deploy to Server
 
 on:
@@ -53,3 +54,4 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}-production:${{ secrets.TAG_NAME }}_${{ github.sha }}
             docker run -d -p 3000:3000 --name ${{ secrets.IMAGE_NAME }}-production ${{ secrets.DOCKER_USERNAME }}/${{ secrets.IMAGE_NAME }}-production:${{ secrets.TAG_NAME }}_${{ github.sha }}
           EOF
+

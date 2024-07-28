@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   Post,
   Put,
@@ -72,5 +73,11 @@ export class ColumnController {
   @Delete('delete/:id')
   async delete(@Param('id') id: string) {
     return await this.service.delete(id);
+  }
+
+  @ApiOperation({ summary: 'Sort task when has bugs hihi' })
+  @Get('reset-task')
+  async resetTask() {
+    return await this.service.resetTask();
   }
 }

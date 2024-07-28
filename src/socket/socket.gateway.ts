@@ -1,12 +1,13 @@
+import { Injectable, UseGuards } from '@nestjs/common';
 import {
-  WebSocketGateway,
-  WebSocketServer,
-  OnGatewayInit,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
+  WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Injectable } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
 import { SocketService } from './socket.service';
 
 @WebSocketGateway(3300, { cors: true })
@@ -18,19 +19,20 @@ export class SocketGateway
 
   constructor(private socketService: SocketService) {}
 
+  @UseGuards(JwtAuthGuard)
   afterInit(server: Server) {
     this.socketService.init(server);
   }
 
   handleConnection(client: Socket) {
-    console.log(`Client connected: ${client.id}`);
+    this.socketService.connection(client);
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`Client disconnected: ${client.id}`);
+    this.socketService.disconnect(client);
   }
 
   sendNotification(message: string) {
-    this.server.emit('notification', message); // Send notification to all clients
+    this.socketService.sendNotification(message);
   }
 }
