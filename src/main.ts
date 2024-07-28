@@ -1,24 +1,22 @@
-import { NestFactory } from '@nestjs/core';
-import { ConfigService } from '@nestjs/config';
-import { AppModule } from './app.module';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { json, urlencoded } from 'express';
 import { ValidationPipe } from '@nestjs/common';
-import { AllExceptionsFilter } from './exception/all-exception.filter';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
+import { ConfigService } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
+import { IoAdapter } from '@nestjs/platform-socket.io';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { json, urlencoded } from 'express';
+import * as http from 'http';
+import { AppModule } from './app.module';
+import { AllExceptionsFilter } from './exception/all-exception.filter';
 
 const corsOptions: CorsOptions = {
   origin: '*',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
   allowedHeaders:
     'Content-Type, Authorization, Content-Length, X-Requested-With, Accept, Accept-Versioning, Origin, Access-Control-Request-Headers, Access-Control-Request-Method',
-  credentials: true,
   exposedHeaders: 'Authorization, Content-Type',
   maxAge: 1728000,
 };
-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
@@ -49,8 +47,12 @@ async function bootstrap() {
   if (!port) {
     throw new Error('PORT must be defined at .env');
   }
-  const server = await app.listen(port || 3001);
+  // Create HTTP server
+  const server = http.createServer(app.getHttpAdapter().getInstance());
+
+  app.useWebSocketAdapter(new IoAdapter(server));
   server.setTimeout(10 * 60 * 1000);
+  await app.listen(port || 3001);
 
   console.log(`Application is running on: ${await app.getUrl()}`);
 }

@@ -107,4 +107,40 @@ export const enumData = {
       background: 'rgba(128, 128, 128, 0.2)',
     },
   },
+  NOTIFICATION_TYPE: {
+    NEW_TASK: {
+      name: 'Create new task!',
+      code: 'NEW_TASK',
+      color: 'rgba(12, 133, 9, 1)',
+      background: 'rgba(12, 133, 9, 0.2)',
+    },
+    NEW_USER: {
+      name: 'Create new user!',
+      code: 'NEW_USER',
+      color: 'rgba(244, 180, 0, 01)',
+      background: 'rgba(244, 180, 0, 0.2)',
+    },
+    UPDATE_TASK: {
+      name: 'Update task!',
+      code: 'UPDATE_TASK',
+      color: 'rgba(255, 61, 61, 01)',
+      background: 'rgba(255, 61, 61, 0.2)',
+    },
+    NEW_MESSAGE: {
+      name: 'New message!',
+      code: 'NEW_MESSAGE',
+      color: 'rgba(186, 104, 200,1)',
+      background: 'rgba(186, 104, 200, 0.2)',
+    },
+  },
 };
+
+export enum EHistoryType {
+  CREATE_GROUP_CHAT = 'CREATE_GROUP_CHAT',
+  CREATE_CHAT = 'CREATE_CHAT',
+}
+
+export enum EChatType {
+  GROUP = 'group',
+  SINGLE = 'single',
+}

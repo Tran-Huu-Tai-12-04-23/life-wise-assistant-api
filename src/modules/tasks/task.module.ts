@@ -7,6 +7,8 @@ import {
 } from 'src/repositories';
 import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
+import { DiscordService } from '../discord/discord.service';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -16,7 +18,7 @@ import { TaskController } from './task.controller';
       UserRepository,
     ]),
   ],
-  providers: [TaskService],
+  providers: [TaskService, ConfigService, DiscordService],
   controllers: [TaskController],
   exports: [TaskService],
 })

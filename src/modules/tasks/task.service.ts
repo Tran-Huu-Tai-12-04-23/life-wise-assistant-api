@@ -1,16 +1,22 @@
-import { ColumnRepository } from './../../repositories/column.repository';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { TaskEntity } from 'src/entities/task.entity';
-import { TaskRepository, UserRepository } from 'src/repositories';
+import { ConfigService } from '@nestjs/config';
+import { enumData } from 'src/constants/enum-data';
 import { UserEntity } from 'src/entities';
-import { Between, In, MoreThan } from 'typeorm';
+import { TaskEntity } from 'src/entities/task.entity';
+import { coreHelper } from 'src/helpers';
+import { TaskRepository, UserRepository } from 'src/repositories';
+import { Between, In, Like, MoreThan } from 'typeorm';
+import { UserDataDTO } from '../auth/dto';
+import { DiscordService } from '../discord/discord.service';
+import { TaskLogDTO } from '../discord/dto';
+import { ColumnRepository } from './../../repositories/column.repository';
 import {
   ChangeStatusTaskDTO,
   MoveTaskInAnotherColumnDTO,
   MoveTaskInTheSameColumnDTO,
   TaskDTO,
+  TaskPaginationDTO,
 } from './dto';
-import { enumData } from 'src/constants/enum-data';
 
 @Injectable()
 export class TaskService {
@@ -18,9 +24,69 @@ export class TaskService {
     private readonly taskRepository: TaskRepository,
     private readonly columnRepository: ColumnRepository,
     private readonly userRepository: UserRepository,
+    private readonly discordService: DiscordService,
+    private readonly configService: ConfigService,
   ) {}
 
-  async create(taskDTO: TaskDTO, user: UserEntity) {
+  FRONT_END_LINK = this.configService.get<string>('FRONT_END_LINK');
+
+  async pagination(taskPaginationDTO: TaskPaginationDTO) {
+    const { status, teamId, columnId, userId, teamMemberId, search } =
+      taskPaginationDTO;
+
+    const whereCon: any = {};
+    if (status) {
+      whereCon.status = status;
+    }
+    if (teamId) {
+      whereCon.team = { id: teamId };
+    }
+    if (columnId) {
+      whereCon.column = { id: columnId };
+    }
+    if (userId) {
+      whereCon.createdBy = { id: userId };
+    }
+    if (teamMemberId) {
+      whereCon.lstPersonInCharge = { id: teamMemberId };
+    }
+    if (search) {
+      whereCon.title = Like(`%${search}%`);
+    }
+
+    const tasks: any = await this.taskRepository.findAndCount({
+      where: { ...whereCon, isDeleted: false },
+      order: { index: 'ASC' },
+      relations: { lstPersonInCharge: true },
+      skip: taskPaginationDTO.skip,
+      take: taskPaginationDTO.take,
+    });
+
+    const resultTask = tasks[0].map((task: any) => {
+      const lstPersonInCharge = task.__lstPersonInCharge__;
+      delete task.__lstPersonInCharge__;
+      const statusOfTask = coreHelper.getStatusOfTask(task.status);
+      const priorityOfTask = coreHelper.getPriorityOfTask(task.priority);
+      const typeOfTask = coreHelper.getPriorityOfTask(task.type);
+      return {
+        lstPersonInCharge,
+        ...task,
+        statusName: statusOfTask?.name,
+        statusColor: statusOfTask?.color,
+        statusBackground: statusOfTask?.background,
+        priorityName: priorityOfTask?.name,
+        priorityColor: priorityOfTask?.color,
+        priorityBackground: priorityOfTask?.background,
+        typeName: typeOfTask?.name,
+        typeColor: typeOfTask?.color,
+        typeBackground: typeOfTask?.background,
+      };
+    });
+
+    return [resultTask, tasks[1]];
+  }
+
+  async create(taskDTO: TaskDTO, user: UserDataDTO) {
     const column: any = await this.columnRepository.findOne({
       where: { id: taskDTO.columnId },
       relations: { tasks: true },
@@ -58,6 +124,19 @@ export class TaskService {
     newTask.status = column.statusCode;
 
     const task = await this.taskRepository.save(newTask);
+
+    const taskLog: TaskLogDTO = {
+      taskName: task.title,
+      memberName: user.userDetail?.fullName || user.username,
+      link: this.FRONT_END_LINK + '/tasks/' + task.id,
+      statusName: task.status,
+      message:
+        user.userDetail?.fullName ||
+        user.username + ' create new task at ' + new Date().toString(),
+      timeString: new Date().toString(),
+    };
+
+    await this.discordService.taskLog(taskLog);
 
     const taskDetail: any = await this.taskRepository.findOne({
       where: { id: task.id, isDeleted: false },
@@ -123,7 +202,7 @@ export class TaskService {
   // move task in the another column and in the same team
   async moveTaskToAnotherColumn(
     moveTaskDTO: MoveTaskInAnotherColumnDTO,
-    user: UserEntity,
+    user: UserDataDTO,
   ) {
     const { taskCurrentIndex, taskNewIndex, columnIdFrom, columnIdTo } =
       moveTaskDTO;
@@ -181,6 +260,24 @@ export class TaskService {
         sourceTask.updatedBy = user.id;
         sourceTask.updatedAt = new Date();
 
+        const taskLog: TaskLogDTO = {
+          taskName: sourceTask.title,
+          memberName: user.userDetail?.fullName || user.username,
+          link: this.FRONT_END_LINK + '/tasks/' + sourceTask.id,
+          statusName: columnTo.statusCode,
+          message:
+            user.userDetail?.fullName ||
+            user.username +
+              '   ' +
+              ' moved task to ' +
+              columnTo.statusCode +
+              'at ' +
+              '    ' +
+              new Date().toString(),
+          timeString: new Date().toString(),
+        };
+
+        await this.discordService.taskLog(taskLog);
         // Save all updated tasks within the transaction
         await transactionalEntityManager.save([
           ...targetTasks,

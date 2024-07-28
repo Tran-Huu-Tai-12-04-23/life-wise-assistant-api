@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AppService } from './app.service';
 
 @ApiTags('')
 @Controller()
@@ -15,7 +15,7 @@ export class AppController {
   }
 
   @ApiOperation({ summary: 'Kiểm tra thời gian theo timezone của server' })
-  @ApiResponse({ status: 200, description: 'Giờ server & giờ ở múi giờ 7' })
+  @ApiResponse({ status: 200, description: 'Giờ server & giờ ở múi giờ 9' })
   @Get('timezone')
   checkTimeZone() {
     return this.service.checkTimeZone();
