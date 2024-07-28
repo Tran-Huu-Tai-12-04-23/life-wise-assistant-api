@@ -13,6 +13,7 @@ import {
 } from 'typeorm';
 import { BaseEntityCustom } from './base.entity';
 import { GroupChatEntity } from './groupChat.entity';
+import { MessageEntity } from './message.entity';
 import { NotificationEntity } from './notification.entity';
 import { TaskEntity } from './task.entity';
 import { TeamEntity } from './team.entity';
@@ -52,6 +53,9 @@ export class UserEntity extends BaseEntityCustom {
 
   @OneToOne(() => UserDetailEntity, (userDetail) => userDetail.user)
   userDetail: Promise<UserDetailEntity>;
+
+  @OneToMany(() => MessageEntity, (mess) => mess.owner)
+  messageSend: Promise<MessageEntity[]>;
 
   @ManyToMany(() => TeamEntity, (team) => team.members)
   @JoinColumn({ name: 'teamId', referencedColumnName: 'id' })

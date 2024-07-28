@@ -27,3 +27,10 @@ export class FilterGroupData {
   @IsString()
   name: string;
 }
+
+export class MessagePaginationDTO {
+  @ApiProperty({ description: 'group chat id ' })
+  @IsOptional()
+  @IsString()
+  groupChatId: string;
+}

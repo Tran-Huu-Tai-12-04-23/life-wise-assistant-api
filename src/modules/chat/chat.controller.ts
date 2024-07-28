@@ -5,7 +5,12 @@ import { CurrentUser } from 'src/helpers/decorators';
 import { JwtAuthGuard } from '../auth/jwt.auth.guard';
 import { PaginationDTO } from '../dto';
 import { ChatService } from './chat.service';
-import { CreateChatDTO, CreateGroupChatDTO, FilterGroupData } from './dto';
+import {
+  CreateChatDTO,
+  CreateGroupChatDTO,
+  FilterGroupData,
+  MessagePaginationDTO,
+} from './dto';
 
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
@@ -54,5 +59,18 @@ export class ChatController {
     @Body() body: PaginationDTO<FilterGroupData>,
   ) {
     return await this.service.groupChatPagination(user, body);
+  }
+
+  @ApiOperation({
+    summary: 'Message pagination',
+  })
+  @Post('message-pagination')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async messagePagination(
+    @CurrentUser() user: UserEntity,
+    @Body() body: PaginationDTO<MessagePaginationDTO>,
+  ) {
+    return await this.service.messagePagination(user, body);
   }
 }

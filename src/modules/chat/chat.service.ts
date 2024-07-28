@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { EChatType, EHistoryType } from 'src/constants/enum-data';
-import { UserEntity } from 'src/entities';
+import { MessageEntity, UserEntity } from 'src/entities';
 import { GroupChatEntity } from 'src/entities/groupChat.entity';
 import { NotificationRepository, UserRepository } from 'src/repositories';
 import { GroupChatRepository } from 'src/repositories/groupchat.repository';
@@ -9,7 +9,12 @@ import { In } from 'typeorm';
 import { CommonService } from '../common/common.service';
 import { CreateHistoryDTO } from '../common/dto';
 import { PaginationDTO } from '../dto';
-import { CreateChatDTO, CreateGroupChatDTO, FilterGroupData } from './dto';
+import {
+  CreateChatDTO,
+  CreateGroupChatDTO,
+  FilterGroupData,
+  MessagePaginationDTO,
+} from './dto';
 
 @Injectable()
 export class ChatService {
@@ -174,5 +179,59 @@ export class ChatService {
     });
 
     return [res, groupChat[1]];
+  }
+
+  async createMessage(
+    groupChat: GroupChatEntity,
+    senderId: string,
+    message: string,
+  ) {
+    const user = await this.userRepo.findOne({ where: { id: senderId } });
+    if (!user) return;
+
+    const messageEntity = new MessageEntity();
+    messageEntity.groupChat = Promise.resolve(groupChat);
+    messageEntity.owner = Promise.resolve(user);
+    messageEntity.content = message;
+    messageEntity.createdAt = new Date();
+    messageEntity.isRead = false;
+    messageEntity.createdBy = user.id;
+    messageEntity.createdByName = user.username;
+    await this.messageRepo.save(messageEntity);
+    return messageEntity;
+  }
+
+  async messagePagination(
+    user: UserEntity,
+    body: PaginationDTO<MessagePaginationDTO>,
+  ) {
+    const whereCon: any = {
+      groupChat: {
+        id: body?.where?.groupChatId,
+      },
+      isDeleted: false,
+    };
+    const message: any = await this.messageRepo.findAndCount({
+      where: whereCon,
+      order: {
+        createdAt: 'DESC',
+      },
+      skip: body.skip,
+      take: body.take,
+      relations: {
+        owner: true,
+      },
+    });
+
+    const res = message[0].map((item: any) => {
+      const owner = item.__owner__;
+      delete item.__owner__;
+      return {
+        ...item,
+        owner,
+        isSender: owner.id === user.id,
+      };
+    });
+    return [res, message[1]];
   }
 }

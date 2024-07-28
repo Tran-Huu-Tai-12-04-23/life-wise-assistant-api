@@ -1,5 +1,5 @@
 import { IsString } from 'class-validator';
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntityCustom } from './base.entity';
 import { GroupChatEntity } from './groupChat.entity';
 import { UserEntity } from './user.entity';
@@ -10,9 +10,9 @@ export class MessageEntity extends BaseEntityCustom {
   @IsString()
   content: string;
 
-  @OneToOne(() => UserEntity)
+  @ManyToOne(() => UserEntity, (user) => user.messageSend)
   @JoinColumn()
-  user: Promise<UserEntity>;
+  owner: Promise<UserEntity>;
 
   @Column({ default: false })
   @IsString()

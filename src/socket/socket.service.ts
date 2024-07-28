@@ -2,8 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
-import { UserRepository } from 'src/repositories';
+import { ChatService } from 'src/modules/chat/chat.service';
+import {
+  GroupChatRepository,
+  MessageRepository,
+  UserRepository,
+} from 'src/repositories';
 import { Device } from './device';
+import { MessageDTO } from './dto';
 
 @Injectable()
 export class SocketService {
@@ -13,6 +19,9 @@ export class SocketService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private userRepo: UserRepository,
+    private groupChatRepo: GroupChatRepository,
+    private messageRepo: MessageRepository,
+    private chatService: ChatService,
   ) {}
 
   JWT_SECRET = this.configService.get<string>('JWT_SECRET');
@@ -20,14 +29,45 @@ export class SocketService {
   public init(server: Server) {
     this.server = server;
     this.server.on('connection', (socket: Socket) => {
-      // console.log(`Client connected: ${socket.id}`);
       // Handle incoming events
-      socket.on('chat message', (message: string) => {
-        console.log(`Message from ${socket.id}: ${message}`);
-        this.connectedClients.forEach((item) => {
-          if (item.socketId !== socket.id) {
-            this.server.to(item.socketId).emit('chat message', message);
-          }
+
+      socket.on('chat message', async (message: MessageDTO) => {
+        const groupChat: any = await this.groupChatRepo.findOne({
+          where: {
+            id: message.groupId,
+            isDeleted: false,
+          },
+          relations: {
+            lstMember: true,
+          },
+        });
+        if (!groupChat) {
+          return;
+        }
+
+        const lstMemberId = groupChat.__lstMember__?.map(
+          (item: any) => item.id,
+        );
+        const lstClient: Device[] = this.connectedClients.filter((item) =>
+          lstMemberId.includes(item.user.id),
+        );
+
+        const res: any = await this.chatService.createMessage(
+          groupChat,
+          message.senderId,
+          message.message,
+        );
+        const owner = res.__owner__;
+        delete res.__owner__;
+        delete res.__groupChat__;
+        // save message
+        lstClient.forEach((item) => {
+          this.server.to(item.socketId).emit('chat message', {
+            ...res,
+            isSender: item.user.id === message.senderId,
+            owner,
+            groupChat,
+          });
         });
       });
       socket.on('disconnect', () => {
@@ -60,6 +100,7 @@ export class SocketService {
       deviceClient.status = false;
       deviceClient.user = user;
       deviceClient.type = 'CHAT';
+
       this.connectedClients.push(deviceClient);
     } catch (error) {
       console.log(error);
