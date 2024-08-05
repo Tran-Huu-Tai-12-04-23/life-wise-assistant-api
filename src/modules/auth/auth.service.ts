@@ -3,6 +3,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { UserRepository } from 'src/repositories/user.repository';
 import {
   FilterLstUserToInviteTeamDTO,
@@ -10,13 +11,11 @@ import {
   SignInDTO,
   SignUpDTO,
 } from './dto';
-import { JwtService } from '@nestjs/jwt';
 
 import { JWT_SECRET } from 'src/constants/key';
 import { UserEntity } from 'src/entities';
 import { Like, Not } from 'typeorm';
 import { PaginationDTO } from '../dto';
-import { passport, secretKey } from './auth.passport';
 
 @Injectable()
 export class AuthService {
@@ -24,7 +23,6 @@ export class AuthService {
     private repo: UserRepository,
     private jwtService: JwtService,
   ) {}
-  
 
   async signIn(signInDto: SignInDTO) {
     const user = await this.repo.findOneBy({ username: signInDto.username });
@@ -76,8 +74,8 @@ export class AuthService {
   async convertJsonGitHubToSignUpDTO(jsonData: any) {
     const signUpDTO = new SignUpDTO();
     signUpDTO.username = jsonData.emails[0].value;
-    signUpDTO.password = jsonData.username;  
-    signUpDTO.confirmPassword = jsonData.username;  
+    signUpDTO.password = jsonData.username;
+    signUpDTO.confirmPassword = jsonData.username;
 
     return signUpDTO;
   }
@@ -85,8 +83,8 @@ export class AuthService {
   async convertJsonGoogleToSignUpDTO(jsonData: any) {
     const signUpDTO = new SignUpDTO();
     signUpDTO.username = jsonData.emails[0].value;
-    signUpDTO.password = jsonData.displayName;  
-    signUpDTO.confirmPassword = jsonData.displayName;  
+    signUpDTO.password = jsonData.displayName;
+    signUpDTO.confirmPassword = jsonData.displayName;
 
     return signUpDTO;
   }
@@ -94,7 +92,7 @@ export class AuthService {
   async convertSignUpDTOToSignInDTO(signUpDTO: SignUpDTO) {
     const signInDTO = new SignInDTO();
     signInDTO.username = signUpDTO.username;
-    signInDTO.password = signUpDTO.password;  
+    signInDTO.password = signUpDTO.password;
 
     return signInDTO;
   }
