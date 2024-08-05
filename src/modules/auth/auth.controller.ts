@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post,Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post,Redirect,Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import {
@@ -13,6 +13,7 @@ import { JwtAuthGuard } from './jwt.auth.guard';
 import { PaginationDTO } from '../dto';
 import { enumData } from 'src/constants/enum-data';
 import { passport, secretKey } from './auth.passport';
+import { Request, Response } from 'express';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -63,13 +64,15 @@ export class AuthController {
   @ApiOperation({
     summary: 'Login with github',
   })
-  @Post('github')
+  @Get('github')
   async githubAuth(@Req() req: Request, @Res() res: Response) {
+    console.log('login with github')
     passport.authenticate('github', { scope: ['user:email'] })(req, res);
   }
 
-  @Get('github/authorized')
+  @Post('github/authorized')
   async githubAuthCallback(@Req() req: Request, @Res() res: Response) {
+    console.log('User no already')
     passport.authenticate('github', { failureRedirect: '/' }, async (err: Error, user: any) => {
       if (err || !user) {
         return { status: 404};
@@ -85,7 +88,7 @@ export class AuthController {
     })(req, res);
   }
 
-  @Post('google')
+  @Get('google')
   async googleAuth(@Req() req: Request, @Res() res: Response) {
     passport.authenticate('google', { scope: ['profile', 'email'] })(req, res);
   }
@@ -94,16 +97,20 @@ export class AuthController {
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
     passport.authenticate('google', { failureRedirect: '/' }, async (err: Error, user: any) => {
       if (err || !user) {
-        return { status: 404};
+        return res.redirect('/login?error=auth_failed');
       }
       const signupDTO = await this.service.convertJsonGoogleToSignUpDTO(user);
-      // If the user exists, then login
-      if(await this.service.checkUserExist(signupDTO.username)){
+      if (await this.service.checkUserExist(signupDTO.username)) {
         const signInDto = await this.service.convertSignUpDTOToSignInDTO(signupDTO);
-        return await this.service.signIn(signInDto);
+        const loginResponse = await this.service.signIn(signInDto);
+        const url = `http://localhost:5173/auth/login?accesstoken=${loginResponse.accessToken}&rftoken=${loginResponse.refreshToken}`;
+        return res.redirect(url); // Redirect to frontend URL
       }
-      // Else sign up
-      return await this.service.signUp(signupDTO);
+      await this.service.signUp(signupDTO);
+      const signInDto = await this.service.convertSignUpDTOToSignInDTO(signupDTO);
+      const loginResponse = await this.service.signIn(signInDto);
+      const url = `http://localhost:5173/auth/login?accesstoken=${loginResponse.accessToken}&rftoken=${loginResponse.refreshToken}`;
+      return res.redirect(url); // Redirect to frontend URL
     })(req, res);
   }
 
