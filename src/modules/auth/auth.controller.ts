@@ -78,27 +78,44 @@ export class AuthController {
     passport.authenticate('github', { scope: ['user:email'] })(req, res);
   }
 
-  @Post('github/authorized')
+  @Get('github/authorized')
   async githubAuthCallback(@Req() req: Request, @Res() res: Response) {
-    passport.authenticate(
-      'github',
-      { failureRedirect: '/' },
-      async (err: Error, user: any) => {
-        if (err || !user) {
-          return { status: 404 };
-        }
-        const signupDTO = await this.service.convertJsonGitHubToSignUpDTO(user);
-        // If the user exists, then login
-        if (await this.service.checkUserExist(signupDTO.username)) {
-          const signInDto =
-            await this.service.convertSignUpDTOToSignInDTO(signupDTO);
-          return await this.service.signIn(signInDto);
-        }
-        // Else sign up
-        return await this.service.signUp(signupDTO);
-      },
-    )(req, res);
-  }
+  passport.authenticate(
+    'github',
+    { failureRedirect: '/' },
+    async (err: Error, user: any) => {
+      if (err || !user) {
+        return res.status(404).json({ error: 'Authentication failed' });
+      }
+
+      // Convert the GitHub user data to your sign-up DTO
+      const signupDTO = await this.service.convertJsonGitHubToSignUpDTO(user);
+
+      // Check if the user already exists
+      if (await this.service.checkUserExist(signupDTO.username)) {
+        // Convert the sign-up DTO to sign-in DTO and log the user in
+        const signInDto = await this.service.convertSignUpDTOToSignInDTO(signupDTO);
+        const loginResponse = await this.service.signIn(signInDto);
+
+        // Redirect to the frontend with the access token
+        const url = `http://localhost:5173/auth/github/callback/success?accessToken=${loginResponse.accessToken}`;
+        return res.redirect(url);
+      }
+
+      // If the user does not exist, sign them up
+      await this.service.signUp(signupDTO);
+
+      // Convert the sign-up DTO to sign-in DTO and log the user in
+      const signInDto = await this.service.convertSignUpDTOToSignInDTO(signupDTO);
+      const loginResponse = await this.service.signIn(signInDto);
+
+      // Redirect to the frontend with the access token
+      const url = `http://localhost:5173/auth/github/callback/success?accessToken=${loginResponse.accessToken}`;
+      return res.redirect(url);
+    },
+  )(req, res);
+}
+
 
   @Get('google')
   async googleAuth(@Req() req: Request, @Res() res: Response) {
@@ -129,7 +146,7 @@ export class AuthController {
         const signInDto =
           await this.service.convertSignUpDTOToSignInDTO(signupDTO);
         const loginResponse = await this.service.signIn(signInDto);
-        const url = `http://localhost:5173/auth/login?accessToken=${loginResponse.accessToken}`;
+        const url = `http://localhost:5173/auth/google/callback/success?accessToken=${loginResponse.accessToken}`;
         return res.redirect(url);
       },
     )(req, res);
