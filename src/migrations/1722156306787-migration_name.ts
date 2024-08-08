@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+// import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class MigrationName1722156306787 implements MigrationInterface {
     name = 'MigrationName1722156306787'
@@ -66,4 +66,4 @@ export class MigrationName1722156306787 implements MigrationInterface {
         await queryRunner.query(`DROP TABLE \`Messages\``);
     }
 
-}
+// }
