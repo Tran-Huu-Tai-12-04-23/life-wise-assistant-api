@@ -5,13 +5,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ColumnEntity } from 'src/entities/column.entity';
-import { ColumnDTO, GetAllColumnsDTO, SwapColDTO } from './dto';
 import { UserEntity } from 'src/entities';
+import { ColumnEntity } from 'src/entities/column.entity';
 import { ColumnRepository, TaskRepository } from 'src/repositories';
 import { TeamRepository } from 'src/repositories/team.repository';
 import { Between, In, Like } from 'typeorm';
-
+import { ColumnDTO, GetAllColumnsDTO, SwapColDTO } from './dto';
 @Injectable()
 export class ColumnService {
   constructor(
@@ -75,8 +74,6 @@ export class ColumnService {
     const colCurrentIndex = swapColDTO.colCurrentIndex;
     const colTargetIndex = swapColDTO.colTargetIndex;
 
-    // Check user permission (same as before)
-
     // Fetch tasks in the affected range (inclusive)
     const affectedColumns = await this.columnRepository.find({
       where: {
@@ -92,13 +89,18 @@ export class ColumnService {
     await this.columnRepository.manager.transaction(async (transaction) => {
       const currentColumn = affectedColumns.find(
         (col) => col.index === colCurrentIndex,
-      )!;
+      );
       if (!currentColumn) {
         throw new NotFoundException('Column not found!');
       }
       affectedColumns.forEach((column) => {
-        if (column !== currentColumn) {
+        if (column !== currentColumn && colCurrentIndex > colTargetIndex) {
           column.index = column.index + 1;
+        } else if (
+          column !== currentColumn &&
+          colCurrentIndex < colTargetIndex
+        ) {
+          column.index = column.index - 1;
         } else {
           column.index = colTargetIndex;
         }
@@ -182,5 +184,28 @@ export class ColumnService {
     );
 
     return res;
+  }
+
+  async resetTask() {
+    const cols: any[] = await this.columnRepository.find({
+      where: {},
+      relations: {
+        tasks: true,
+      },
+    });
+
+    await this.taskRepository.manager.transaction(async (tm) => {
+      for (const col of cols) {
+        let index = 1;
+        const lstTasks = col.__tasks__;
+        for (const task of lstTasks) {
+          task.index = index;
+          await tm.save(task);
+          index++;
+        }
+      }
+    });
+
+    return { message: 'Successfully!' };
   }
 }

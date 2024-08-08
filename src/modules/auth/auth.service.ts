@@ -12,6 +12,7 @@ import {
   SignUpDTO,
 } from './dto';
 
+import { enumData } from 'src/constants/enum-data';
 import { JWT_SECRET } from 'src/constants/key';
 import { UserEntity } from 'src/entities';
 import { Like, Not } from 'typeorm';
@@ -25,7 +26,12 @@ export class AuthService {
   ) {}
 
   async signIn(signInDto: SignInDTO) {
-    const user = await this.repo.findOneBy({ username: signInDto.username });
+    const user: any = await this.repo.findOne({
+      where: { username: signInDto.username },
+      relations: {
+        userDetail: true,
+      },
+    });
 
     if (!user) {
       throw new NotFoundException('User not found!');
@@ -49,7 +55,16 @@ export class AuthService {
       expiresIn: '7d',
     });
 
-    return { accessToken, refreshToken };
+    const userDetail = user.__userDetail__;
+    delete user.__userDetail__;
+    delete user.password;
+
+    return {
+      accessToken,
+      refreshToken,
+      enumData,
+      user: { ...user, userDetail },
+    };
   }
 
   async signUp(signUpDTO: SignUpDTO) {
@@ -142,5 +157,11 @@ export class AuthService {
       take: data.take,
     });
     return lstUser;
+  }
+
+  async getUserById(id: string) {
+    const user = await this.repo.findOneBy({ id });
+    if (!user) throw new NotFoundException('User not found!');
+    return user;
   }
 }
