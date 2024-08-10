@@ -1,11 +1,11 @@
-import { PaginationDTO } from './../dto/index';
 import { Injectable } from '@nestjs/common';
-import { TeamRepository } from 'src/repositories/team.repository';
-import { InviteLstMemberDTO, RemoveUserTeamDTO, TeamDTO } from './dto';
+import { UserEntity } from 'src/entities';
 import { TeamEntity } from 'src/entities/team.entity';
 import { UserRepository } from 'src/repositories';
+import { TeamRepository } from 'src/repositories/team.repository';
 import { In, Like } from 'typeorm';
-import { UserEntity } from 'src/entities';
+import { PaginationDTO } from './../dto/index';
+import { InviteLstMemberDTO, RemoveUserTeamDTO, TeamDTO } from './dto';
 
 @Injectable()
 export class TeamsService {

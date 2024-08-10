@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { enumData } from 'src/constants/enum-data';
 import { UserEntity } from 'src/entities';
 import { ColumnEntity } from 'src/entities/column.entity';
 import { ColumnRepository, TaskRepository } from 'src/repositories';
@@ -174,12 +175,15 @@ export class ColumnService {
           relations: { lstPersonInCharge: true },
           order: { index: 'ASC' },
         });
+        const color = enumData.taskStatus[col.statusCode as 'PENDING'].color;
+        const background =
+          enumData.taskStatus[col.statusCode as 'PENDING'].background;
         return {
           ...col,
           tasks: tasks.map((tas: any) => {
             const members = tas.__lstPersonInCharge__;
             delete tas.__lstPersonInCharge__;
-            return { ...tas, lstMember: members };
+            return { ...tas, lstMember: members, color, background };
           }),
         };
       }),
