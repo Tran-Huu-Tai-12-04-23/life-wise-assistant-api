@@ -180,10 +180,12 @@ export class ColumnService {
           enumData.taskStatus[col.statusCode as 'PENDING'].background;
         return {
           ...col,
+          color,
+          background,
           tasks: tasks.map((tas: any) => {
             const members = tas.__lstPersonInCharge__;
             delete tas.__lstPersonInCharge__;
-            return { ...tas, lstMember: members, color, background };
+            return { ...tas, lstMember: members };
           }),
         };
       }),
