@@ -185,7 +185,14 @@ export class ColumnService {
           tasks: tasks.map((tas: any) => {
             const members = tas.__lstPersonInCharge__;
             delete tas.__lstPersonInCharge__;
-            return { ...tas, lstMember: members };
+            const statusEnum = enumData.taskStatus[tas.status as 'PENDING'];
+            return {
+              ...tas,
+              lstMember: members,
+              statusName: statusEnum.name,
+              statusColor: statusEnum.color,
+              statusBackground: statusEnum.background,
+            };
           }),
         };
       }),
