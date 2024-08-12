@@ -84,7 +84,16 @@ export class TeamsService {
     const members = res.__members__;
     delete res.__members__;
 
-    return { message: 'Team created successfully', data: { ...res, members } };
+    const tags = res.tags.split(',').map((tag: string) => {
+      const tagData =
+        enumData.BOARD_TAG[tag as keyof typeof enumData.BOARD_TAG];
+
+      return tagData;
+    });
+    return {
+      message: 'Team created successfully',
+      data: { ...res, members, tags },
+    };
   }
 
   async addUserToTeam(id: string, userId: string) {
