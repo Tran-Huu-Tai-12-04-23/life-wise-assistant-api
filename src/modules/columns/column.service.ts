@@ -40,8 +40,13 @@ export class ColumnService {
       lstStatus,
     };
   }
-  async create(columnDTO: ColumnDTO, user: UserEntity) {
-    const existCol = await this.columnRepository.findOne({
+  async create(
+    columnDTO: ColumnDTO,
+    user: UserEntity,
+    repo?: ColumnRepository,
+  ) {
+    const mainRepo = repo || this.columnRepository;
+    const existCol = await mainRepo.findOne({
       where: { name: columnDTO.name, team: { id: columnDTO.teamId } },
     });
     if (existCol) {

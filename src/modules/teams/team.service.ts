@@ -2,9 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { enumData } from 'src/constants/enum-data';
 import { UserEntity } from 'src/entities';
 import { TeamEntity } from 'src/entities/team.entity';
-import { UserRepository } from 'src/repositories';
+import { ColumnRepository, UserRepository } from 'src/repositories';
 import { TeamRepository } from 'src/repositories/team.repository';
 import { In, Like } from 'typeorm';
+import { ColumnService } from '../columns/column.service';
+import { ColumnDTO } from '../columns/dto';
 import { PaginationDTO } from './../dto/index';
 import { InviteLstMemberDTO, RemoveUserTeamDTO, TeamDTO } from './dto';
 
@@ -13,6 +15,7 @@ export class TeamsService {
   constructor(
     private repo: TeamRepository,
     private userRepo: UserRepository,
+    private columnService: ColumnService,
   ) {}
 
   async getYourWorkPlace(user: UserEntity) {
@@ -60,40 +63,61 @@ export class TeamsService {
     return [res, data[1]];
   }
   async create(data: TeamDTO, user: UserEntity) {
-    const team = await this.repo.findOneBy({ name: data.name });
-    if (team) {
-      throw new Error('Team already exists!');
-    }
-    let lstMember = [user];
-    const users: UserEntity[] = await this.userRepo.find({
-      where: { id: In(data.members) },
+    return this.repo.manager.transaction(async (transaction) => {
+      const columRepo = transaction.getCustomRepository(ColumnRepository);
+      const teamRepo = transaction.getCustomRepository(TeamRepository);
+      const userRepo = transaction.getCustomRepository(UserRepository);
+      const team = await teamRepo.findOneBy({ name: data.name });
+      if (team) {
+        throw new Error('Team already exists!');
+      }
+
+      const users: UserEntity[] = await userRepo.find({
+        where: { id: In(data.members) },
+      });
+      const lstMember = [user, ...users];
+
+      const teamEntity = new TeamEntity();
+      teamEntity.name = data.name;
+      teamEntity.thumbnails = data.thumbnails;
+      teamEntity.description = data.description;
+      teamEntity.tags = data.tags;
+      teamEntity.createdAt = new Date();
+      teamEntity.createdBy = user.id;
+      teamEntity.createdByName = user.username;
+      teamEntity.isWorkPlace = data.isWorkPlace || false;
+      teamEntity.members = Promise.resolve(lstMember);
+
+      const res: any = await this.repo.save(teamEntity);
+      const members = res.__members__;
+      delete res.__members__;
+
+      const tags = res.tags
+        .split(',')
+        .map(
+          (tag: string) =>
+            enumData.BOARD_TAG[tag.trim() as keyof typeof enumData.BOARD_TAG],
+        );
+
+      const columns = Object.keys(enumData.taskType).map(
+        (key) => enumData.taskType[key as keyof typeof enumData.taskType],
+      );
+
+      await Promise.all(
+        columns.map(async (column) => {
+          const columnDto = new ColumnDTO();
+          columnDto.name = column.name;
+          columnDto.teamId = res.id;
+          columnDto.statusCode = column.code;
+          await this.columnService.create(columnDto, user, columRepo);
+        }),
+      );
+
+      return {
+        message: 'Team created successfully',
+        data: { ...res, members, tags },
+      };
     });
-    lstMember = [...lstMember, ...(users || [])];
-    const teamEntity = new TeamEntity();
-    teamEntity.name = data.name;
-    teamEntity.thumbnails = data.thumbnails;
-    teamEntity.description = data.description;
-    teamEntity.tags = data.tags;
-    teamEntity.createdAt = new Date();
-    teamEntity.createdBy = user.id;
-    teamEntity.createdByName = user.username;
-    teamEntity.isWorkPlace = data.isWorkPlace || false;
-
-    teamEntity.members = Promise.resolve(lstMember);
-    const res: any = await this.repo.save(teamEntity);
-    const members = res.__members__;
-    delete res.__members__;
-
-    const tags = res.tags.split(',').map((tag: string) => {
-      const tagData =
-        enumData.BOARD_TAG[tag.trim() as keyof typeof enumData.BOARD_TAG];
-
-      return tagData;
-    });
-    return {
-      message: 'Team created successfully',
-      data: { ...res, members, tags },
-    };
   }
 
   async addUserToTeam(id: string, userId: string) {
