@@ -50,7 +50,7 @@ export class TeamsService {
       delete item.__members__;
       const tags = team.tags.split(',').map((tag: string) => {
         const tagData =
-          enumData.BOARD_TAG[tag as keyof typeof enumData.BOARD_TAG];
+          enumData.BOARD_TAG[tag.trim() as keyof typeof enumData.BOARD_TAG];
 
         return tagData;
       });
@@ -86,7 +86,7 @@ export class TeamsService {
 
     const tags = res.tags.split(',').map((tag: string) => {
       const tagData =
-        enumData.BOARD_TAG[tag as keyof typeof enumData.BOARD_TAG];
+        enumData.BOARD_TAG[tag.trim() as keyof typeof enumData.BOARD_TAG];
 
       return tagData;
     });
@@ -181,7 +181,7 @@ export class TeamsService {
 
     const tags = team.tags.split(',').map((tag: string) => {
       const tagData =
-        enumData.BOARD_TAG[tag as keyof typeof enumData.BOARD_TAG];
+        enumData.BOARD_TAG[tag.trim() as keyof typeof enumData.BOARD_TAG];
 
       return tagData;
     });
