@@ -80,7 +80,7 @@ export class ColumnService {
     newCol.createdBy = user.id;
     newCol.createdByName = user.username;
     newCol.statusCode = columnDTO.statusCode;
-    newCol.index = team.__columns__.length + 1;
+    newCol.index = columnDTO?.index || team.__columns__.length + 1;
 
     const res = await this.columnRepository.insert(newCol);
 
@@ -198,9 +198,11 @@ export class ColumnService {
           relations: { lstPersonInCharge: true },
           order: { index: 'ASC' },
         });
-        const color = enumData.taskStatus[col.statusCode as 'PENDING'].color;
+        const color =
+          enumData.taskStatus[col.statusCode as 'PENDING']?.color || '#ccc';
         const background =
-          enumData.taskStatus[col.statusCode as 'PENDING'].background;
+          enumData.taskStatus[col.statusCode as 'PENDING']?.background ||
+          'rgba(0,0,0,0.1)';
         return {
           ...col,
           color,

@@ -10,7 +10,7 @@ import { Server, Socket } from 'socket.io';
 import { JwtAuthGuard } from 'src/modules/auth/jwt.auth.guard';
 import { SocketService } from './socket.service';
 
-@WebSocketGateway(3300, { cors: true })
+@WebSocketGateway(8080, { cors: true })
 @Injectable()
 export class SocketGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect

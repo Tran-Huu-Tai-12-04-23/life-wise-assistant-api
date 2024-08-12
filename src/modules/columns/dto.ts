@@ -22,6 +22,10 @@ export class ColumnDTO {
   @IsNotEmpty()
   @IsString()
   statusCode: string;
+  @ApiProperty({ description: 'Index of column' })
+  @IsOptional()
+  @IsNumber()
+  index: number;
 }
 
 export class SwapColDTO {

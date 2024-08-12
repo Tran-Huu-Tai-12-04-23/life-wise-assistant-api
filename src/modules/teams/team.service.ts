@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { enumData } from 'src/constants/enum-data';
-import { UserEntity } from 'src/entities';
+import { ColumnEntity, UserEntity } from 'src/entities';
 import { TeamEntity } from 'src/entities/team.entity';
-import { ColumnRepository, UserRepository } from 'src/repositories';
+import { UserRepository } from 'src/repositories';
 import { TeamRepository } from 'src/repositories/team.repository';
 import { In, Like } from 'typeorm';
 import { ColumnService } from '../columns/column.service';
@@ -64,10 +64,12 @@ export class TeamsService {
   }
   async create(data: TeamDTO, user: UserEntity) {
     return this.repo.manager.transaction(async (transaction) => {
-      const columRepo = transaction.getCustomRepository(ColumnRepository);
-      const teamRepo = transaction.getCustomRepository(TeamRepository);
-      const userRepo = transaction.getCustomRepository(UserRepository);
-      const team = await teamRepo.findOneBy({ name: data.name });
+      const columRepo = transaction.getRepository(ColumnEntity);
+      const teamRepo = transaction.getRepository(TeamEntity);
+      const userRepo = transaction.getRepository(UserEntity);
+      const team = await teamRepo.findOne({
+        where: { name: data.name },
+      });
       if (team) {
         throw new Error('Team already exists!');
       }
@@ -99,16 +101,17 @@ export class TeamsService {
             enumData.BOARD_TAG[tag.trim() as keyof typeof enumData.BOARD_TAG],
         );
 
-      const columns = Object.keys(enumData.taskType).map(
-        (key) => enumData.taskType[key as keyof typeof enumData.taskType],
+      const columns = Object.keys(enumData.taskStatus).map(
+        (key) => enumData.taskStatus[key as keyof typeof enumData.taskStatus],
       );
 
       await Promise.all(
-        columns.map(async (column) => {
+        columns.map(async (column, index) => {
           const columnDto = new ColumnDTO();
           columnDto.name = column.name;
           columnDto.teamId = res.id;
           columnDto.statusCode = column.code;
+          columnDto.index = +index + 1;
           await this.columnService.create(columnDto, user, columRepo);
         }),
       );
