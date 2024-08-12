@@ -6,6 +6,7 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { json, urlencoded } from 'express';
 import * as http from 'http';
+import * as https from 'https';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './exception/all-exception.filter';
 

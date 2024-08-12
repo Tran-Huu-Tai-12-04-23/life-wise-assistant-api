@@ -104,6 +104,15 @@ export class AuthService {
     return signUpDTO;
   }
 
+  async convertJsonFacebookToSignUpDTO(jsonData: any) {
+    const signUpDTO = new SignUpDTO();
+    signUpDTO.username = jsonData.displayName;
+    signUpDTO.password = jsonData.id;
+    signUpDTO.confirmPassword = jsonData.id;
+
+    return signUpDTO;
+  }
+
   async convertSignUpDTOToSignInDTO(signUpDTO: SignUpDTO) {
     const signInDTO = new SignInDTO();
     signInDTO.username = signUpDTO.username;

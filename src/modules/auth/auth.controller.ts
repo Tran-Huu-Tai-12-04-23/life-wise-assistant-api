@@ -154,6 +154,42 @@ export class AuthController {
     )(req, res);
   }
 
+  @Get('facebook')
+  async facebookAuth(@Req() req: Request, @Res() res: Response) {
+    passport.authenticate('facebook', {
+      scope: ['public_profile', 'email'],
+    })(req, res);
+  }
+
+  @Get('facebook/callback')
+  async facebookAuthCallback(@Req() req: Request, @Res() res: Response) {
+    passport.authenticate(
+      'facebook',
+      { failureRedirect: '/' },
+      async (err: Error, user: any) => {
+        if (err || !user) {
+          return res.redirect('/login?error=auth_failed');
+        }
+        const signupDTO = await this.service.convertJsonFacebookToSignUpDTO(user);
+        if (await this.service.checkUserExist(signupDTO.username)) {
+          const signInDto =
+            await this.service.convertSignUpDTOToSignInDTO(signupDTO);
+          const loginResponse = await this.service.signIn(signInDto);
+
+          const url = `${this.FRONT_END_LINK}/auth/facebook/callback/success?accessToken=${loginResponse.accessToken}`;
+          return res.redirect(url);
+        }
+        await this.service.signUp(signupDTO);
+        const signInDto =
+          await this.service.convertSignUpDTOToSignInDTO(signupDTO);
+        const loginResponse = await this.service.signIn(signInDto);
+        const url = `${this.FRONT_END_LINK}/auth/facebook/callback/success?accessToken=${loginResponse.accessToken}`;
+        return res.redirect(url);
+      },
+    )(req, res);
+  }
+
+
   @ApiOperation({
     summary: 'Refresh ac token when ac token expired',
   })
