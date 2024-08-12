@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsString,
+  IsArray,
   IsNotEmpty,
   IsNumber,
-  IsArray,
   IsOptional,
+  IsString,
 } from 'class-validator';
 
 export class ColumnDTO {
@@ -44,7 +44,7 @@ export class GetAllColumnsDTO {
   @ApiProperty({ description: 'Lst member in charge' })
   @IsOptional()
   @IsArray()
-  lstPersonInCharge: string[];
+  members: string[];
 
   @ApiProperty({ description: 'Search key' })
   @IsOptional()
@@ -53,6 +53,13 @@ export class GetAllColumnsDTO {
 
   @ApiProperty({ description: 'Status name' })
   @IsOptional()
+  @IsArray()
+  lstStatus: string;
+}
+
+export class GetDataToFilterDTO {
+  @ApiProperty({ description: 'Team id' })
+  @IsNotEmpty()
   @IsString()
-  status: string;
+  teamId: string;
 }

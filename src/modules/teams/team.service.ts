@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { enumData } from 'src/constants/enum-data';
 import { UserEntity } from 'src/entities';
 import { TeamEntity } from 'src/entities/team.entity';
 import { UserRepository } from 'src/repositories';
@@ -47,7 +48,13 @@ export class TeamsService {
     const res = lstTeams.map((item: any) => {
       const { __members__, ...team } = item;
       delete item.__members__;
-      return { ...team, members: __members__ };
+      const tags = team.tags.split(',').map((tag: string) => {
+        const tagData =
+          enumData.BOARD_TAG[tag as keyof typeof enumData.BOARD_TAG];
+
+        return tagData;
+      });
+      return { ...team, members: __members__, tags };
     });
 
     return [res, data[1]];
@@ -162,6 +169,14 @@ export class TeamsService {
     const users = team.__users__;
     delete team.__users__;
     delete team.__has_users__;
-    return { message: 'Team detail', data: { ...team, users } };
+
+    const tags = team.tags.split(',').map((tag: string) => {
+      const tagData =
+        enumData.BOARD_TAG[tag as keyof typeof enumData.BOARD_TAG];
+
+      return tagData;
+    });
+
+    return { message: 'Team detail', data: { ...team, users, tags } };
   }
 }

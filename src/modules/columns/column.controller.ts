@@ -18,7 +18,12 @@ import { UserEntity } from 'src/entities';
 import { CurrentUser } from 'src/helpers/decorators';
 import { JwtAuthGuard } from '../auth/jwt.auth.guard';
 import { ColumnService } from './column.service';
-import { ColumnDTO, GetAllColumnsDTO, SwapColDTO } from './dto';
+import {
+  ColumnDTO,
+  GetAllColumnsDTO,
+  GetDataToFilterDTO,
+  SwapColDTO,
+} from './dto';
 
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
@@ -26,6 +31,15 @@ import { ColumnDTO, GetAllColumnsDTO, SwapColDTO } from './dto';
 @Controller('column')
 export class ColumnController {
   constructor(private readonly service: ColumnService) {}
+
+  @ApiOperation({
+    summary: 'Get data to filter',
+  })
+  @ApiResponse({ status: 201 })
+  @Post('filter-data')
+  async getDataToFilter(@Body() getDataToFilter: GetDataToFilterDTO) {
+    return await this.service.getDataToFIlter(getDataToFilter);
+  }
 
   @ApiOperation({
     summary: 'Get all column of team',
