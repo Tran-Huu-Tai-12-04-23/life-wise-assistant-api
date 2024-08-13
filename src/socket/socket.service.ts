@@ -14,7 +14,7 @@ import { MessageDTO } from './dto';
 @Injectable()
 export class SocketService {
   private server: Server;
-  private connectedClients = new Array<any>();
+  private connectedClients = new Array<Device>();
   constructor(
     private jwtService: JwtService,
     private configService: ConfigService,
@@ -42,12 +42,14 @@ export class SocketService {
           },
         });
         if (!groupChat) {
+          console.log('Khong tim thay group chat');
           return;
         }
 
         const lstMemberId = groupChat.__lstMember__?.map(
           (item: any) => item.id,
         );
+        console.log(groupChat.__lstMember__?.map((item: any) => item.username));
         const lstClient: Device[] = this.connectedClients.filter((item) =>
           lstMemberId.includes(item.user.id),
         );
@@ -57,11 +59,14 @@ export class SocketService {
           message.senderId,
           message.message,
         );
+
         const owner = res.__owner__;
         delete res.__owner__;
         delete res.__groupChat__;
+        console.log(lstClient.length);
         // save message
         lstClient.forEach((item) => {
+          console.log(item.socketId);
           this.server.to(item.socketId).emit('chat message', {
             ...res,
             isSender: item.user.id === message.senderId,

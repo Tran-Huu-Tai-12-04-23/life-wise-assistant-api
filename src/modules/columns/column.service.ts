@@ -143,7 +143,9 @@ export class ColumnService {
     const where: any = {};
     where.team = { id: getAllColumnDTO.teamId };
     where.isDeleted = false;
-
+    if (getAllColumnDTO.status) {
+      where.statusCode = Like(`%${getAllColumnDTO.status}%`);
+    }
     const columns: any = await this.columnRepository.find({
       where,
       order: { index: 'ASC' },
