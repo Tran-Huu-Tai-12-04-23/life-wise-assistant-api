@@ -5,12 +5,18 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { enumData } from 'src/constants/enum-data';
 import { UserEntity } from 'src/entities';
 import { ColumnEntity } from 'src/entities/column.entity';
 import { ColumnRepository, TaskRepository } from 'src/repositories';
 import { TeamRepository } from 'src/repositories/team.repository';
 import { Between, In, Like } from 'typeorm';
-import { ColumnDTO, GetAllColumnsDTO, SwapColDTO } from './dto';
+import {
+  ColumnDTO,
+  GetAllColumnsDTO,
+  GetDataToFilterDTO,
+  SwapColDTO,
+} from './dto';
 @Injectable()
 export class ColumnService {
   constructor(
@@ -18,8 +24,29 @@ export class ColumnService {
     private readonly teamRepository: TeamRepository,
     private readonly taskRepository: TaskRepository,
   ) {}
-  async create(columnDTO: ColumnDTO, user: UserEntity) {
-    const existCol = await this.columnRepository.findOne({
+  async getDataToFIlter(getDataToFilter: GetDataToFilterDTO) {
+    const columns = await this.columnRepository.find({
+      where: {
+        team: { id: getDataToFilter.teamId },
+        isDeleted: false,
+      },
+      order: { index: 'ASC' },
+    });
+
+    const lstStatus = columns.map(
+      (item) => enumData.taskStatus[item.statusCode as 'PENDING'],
+    );
+    return {
+      lstStatus,
+    };
+  }
+  async create(
+    columnDTO: ColumnDTO,
+    user: UserEntity,
+    repo?: ColumnRepository,
+  ) {
+    const mainRepo = repo || this.columnRepository;
+    const existCol = await mainRepo.findOne({
       where: { name: columnDTO.name, team: { id: columnDTO.teamId } },
     });
     if (existCol) {
@@ -53,7 +80,7 @@ export class ColumnService {
     newCol.createdBy = user.id;
     newCol.createdByName = user.username;
     newCol.statusCode = columnDTO.statusCode;
-    newCol.index = team.__columns__.length + 1;
+    newCol.index = columnDTO?.index || team.__columns__.length + 1;
 
     const res = await this.columnRepository.insert(newCol);
 
@@ -143,8 +170,8 @@ export class ColumnService {
     const where: any = {};
     where.team = { id: getAllColumnDTO.teamId };
     where.isDeleted = false;
-    if (getAllColumnDTO.status) {
-      where.statusCode = Like(`%${getAllColumnDTO.status}%`);
+    if (getAllColumnDTO.lstStatus && getAllColumnDTO.lstStatus.length > 0) {
+      where.statusCode = In([...getAllColumnDTO.lstStatus]);
     }
     const columns: any = await this.columnRepository.find({
       where,
@@ -152,18 +179,15 @@ export class ColumnService {
     });
 
     const whereForTask: any = {};
-    if (getAllColumnDTO.status) {
-      whereForTask.status = Like(`%${getAllColumnDTO.status}%`);
+    if (getAllColumnDTO.lstStatus && getAllColumnDTO.lstStatus.length > 0) {
+      whereForTask.status = In([...getAllColumnDTO.lstStatus]);
     }
     if (getAllColumnDTO.searchKey) {
       whereForTask.title = Like(`%${getAllColumnDTO.searchKey}%`);
     }
-    if (
-      getAllColumnDTO.lstPersonInCharge &&
-      getAllColumnDTO.lstPersonInCharge.length > 0
-    ) {
+    if (getAllColumnDTO.members && getAllColumnDTO.members.length > 0) {
       whereForTask.lstPersonInCharge = {
-        id: In(getAllColumnDTO.lstPersonInCharge),
+        id: In(getAllColumnDTO.members),
       };
     }
 
@@ -174,12 +198,26 @@ export class ColumnService {
           relations: { lstPersonInCharge: true },
           order: { index: 'ASC' },
         });
+        const color =
+          enumData.taskStatus[col.statusCode as 'PENDING']?.color || '#ccc';
+        const background =
+          enumData.taskStatus[col.statusCode as 'PENDING']?.background ||
+          'rgba(0,0,0,0.1)';
         return {
           ...col,
+          color,
+          background,
           tasks: tasks.map((tas: any) => {
             const members = tas.__lstPersonInCharge__;
             delete tas.__lstPersonInCharge__;
-            return { ...tas, lstMember: members };
+            const statusEnum = enumData.taskStatus[tas.status as 'PENDING'];
+            return {
+              ...tas,
+              lstMember: members,
+              statusName: statusEnum.name,
+              statusColor: statusEnum.color,
+              statusBackground: statusEnum.background,
+            };
           }),
         };
       }),

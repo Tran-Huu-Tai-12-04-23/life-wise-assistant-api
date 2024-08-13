@@ -1,17 +1,21 @@
-import { PaginationDTO } from './../dto/index';
 import { Injectable } from '@nestjs/common';
-import { TeamRepository } from 'src/repositories/team.repository';
-import { InviteLstMemberDTO, RemoveUserTeamDTO, TeamDTO } from './dto';
+import { enumData } from 'src/constants/enum-data';
+import { ColumnEntity, UserEntity } from 'src/entities';
 import { TeamEntity } from 'src/entities/team.entity';
 import { UserRepository } from 'src/repositories';
+import { TeamRepository } from 'src/repositories/team.repository';
 import { In, Like } from 'typeorm';
-import { UserEntity } from 'src/entities';
+import { ColumnService } from '../columns/column.service';
+import { ColumnDTO } from '../columns/dto';
+import { PaginationDTO } from './../dto/index';
+import { InviteLstMemberDTO, RemoveUserTeamDTO, TeamDTO } from './dto';
 
 @Injectable()
 export class TeamsService {
   constructor(
     private repo: TeamRepository,
     private userRepo: UserRepository,
+    private columnService: ColumnService,
   ) {}
 
   async getYourWorkPlace(user: UserEntity) {
@@ -47,37 +51,76 @@ export class TeamsService {
     const res = lstTeams.map((item: any) => {
       const { __members__, ...team } = item;
       delete item.__members__;
-      return { ...team, members: __members__ };
+      const tags = team.tags.split(',').map((tag: string) => {
+        const tagData =
+          enumData.BOARD_TAG[tag.trim() as keyof typeof enumData.BOARD_TAG];
+
+        return tagData;
+      });
+      return { ...team, members: __members__, tags };
     });
 
     return [res, data[1]];
   }
   async create(data: TeamDTO, user: UserEntity) {
-    const team = await this.repo.findOneBy({ name: data.name });
-    if (team) {
-      throw new Error('Team already exists!');
-    }
-    let lstMember = [user];
-    const users: UserEntity[] = await this.userRepo.find({
-      where: { id: In(data.members) },
+    return this.repo.manager.transaction(async (transaction) => {
+      const columRepo = transaction.getRepository(ColumnEntity);
+      const teamRepo = transaction.getRepository(TeamEntity);
+      const userRepo = transaction.getRepository(UserEntity);
+      const team = await teamRepo.findOne({
+        where: { name: data.name },
+      });
+      if (team) {
+        throw new Error('Team already exists!');
+      }
+
+      const users: UserEntity[] = await userRepo.find({
+        where: { id: In(data.members) },
+      });
+      const lstMember = [user, ...users];
+
+      const teamEntity = new TeamEntity();
+      teamEntity.name = data.name;
+      teamEntity.thumbnails = data.thumbnails;
+      teamEntity.description = data.description;
+      teamEntity.tags = data.tags;
+      teamEntity.createdAt = new Date();
+      teamEntity.createdBy = user.id;
+      teamEntity.createdByName = user.username;
+      teamEntity.isWorkPlace = data.isWorkPlace || false;
+      teamEntity.members = Promise.resolve(lstMember);
+
+      const res: any = await this.repo.save(teamEntity);
+      const members = res.__members__;
+      delete res.__members__;
+
+      const tags = res.tags
+        .split(',')
+        .map(
+          (tag: string) =>
+            enumData.BOARD_TAG[tag.trim() as keyof typeof enumData.BOARD_TAG],
+        );
+
+      const columns = Object.keys(enumData.taskStatus).map(
+        (key) => enumData.taskStatus[key as keyof typeof enumData.taskStatus],
+      );
+
+      await Promise.all(
+        columns.map(async (column, index) => {
+          const columnDto = new ColumnDTO();
+          columnDto.name = column.name;
+          columnDto.teamId = res.id;
+          columnDto.statusCode = column.code;
+          columnDto.index = +index + 1;
+          await this.columnService.create(columnDto, user, columRepo);
+        }),
+      );
+
+      return {
+        message: 'Team created successfully',
+        data: { ...res, members, tags },
+      };
     });
-    lstMember = [...lstMember, ...(users || [])];
-    const teamEntity = new TeamEntity();
-    teamEntity.name = data.name;
-    teamEntity.thumbnails = data.thumbnails;
-    teamEntity.description = data.description;
-    teamEntity.tags = data.tags;
-    teamEntity.createdAt = new Date();
-    teamEntity.createdBy = user.id;
-    teamEntity.createdByName = user.username;
-    teamEntity.isWorkPlace = data.isWorkPlace || false;
-
-    teamEntity.members = Promise.resolve(lstMember);
-    const res: any = await this.repo.save(teamEntity);
-    const members = res.__members__;
-    delete res.__members__;
-
-    return { message: 'Team created successfully', data: { ...res, members } };
   }
 
   async addUserToTeam(id: string, userId: string) {
@@ -162,6 +205,14 @@ export class TeamsService {
     const users = team.__users__;
     delete team.__users__;
     delete team.__has_users__;
-    return { message: 'Team detail', data: { ...team, users } };
+
+    const tags = team.tags.split(',').map((tag: string) => {
+      const tagData =
+        enumData.BOARD_TAG[tag.trim() as keyof typeof enumData.BOARD_TAG];
+
+      return tagData;
+    });
+
+    return { message: 'Team detail', data: { ...team, users, tags } };
   }
 }
