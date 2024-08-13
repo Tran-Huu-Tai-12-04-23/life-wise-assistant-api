@@ -11,10 +11,7 @@ import {
   Strategy as GoogleStrategy,
 } from 'passport-google-oauth20';
 
-import {
-  Strategy as FacebookStrategy,
-} from 'passport-facebook';
-
+import { Strategy as FacebookStrategy } from 'passport-facebook';
 
 config();
 
@@ -63,7 +60,7 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       callbackURL: `${process.env.NEXT_PUBLIC_URL_GOOGLE}`,
       scope: ['profile', 'email'],
-      proxy: true,  // Thêm dòng này
+      proxy: true, // Thêm dòng này
     },
     async function (
       accessToken: string,
@@ -88,14 +85,17 @@ passport.use(
   ),
 );
 passport.use(
-    new FacebookStrategy({
-        clientID: process.env.FACEBOOK_CLIENT_ID as string,
-        clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
-        callbackURL: `${process.env.NEXT_PUBLIC_URL_FACEBOOK}`,
-  }, function (accessToken, refreshToken, profile, done) {
-    return done(null, profile);
-  }
-));
+  new FacebookStrategy(
+    {
+      clientID: process.env.FACEBOOK_CLIENT_ID as string,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
+      callbackURL: `${process.env.NEXT_PUBLIC_URL_FACEBOOK}`,
+    },
+    function (accessToken, refreshToken, profile, done) {
+      return done(null, profile);
+    },
+  ),
+);
 
 passport.serializeUser((user: any, done: (err: any, id?: any) => void) => {
   done(null, user);
