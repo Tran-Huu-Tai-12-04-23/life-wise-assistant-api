@@ -1,6 +1,7 @@
 import { Entity, Column, JoinColumn, OneToOne } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { BaseEntityCustom } from './base.entity';
+
 @Entity(`UserDetails`)
 export class UserDetailEntity extends BaseEntityCustom {
   @Column({ length: 500 })
