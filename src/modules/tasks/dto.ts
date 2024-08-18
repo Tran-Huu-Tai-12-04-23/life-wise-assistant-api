@@ -23,7 +23,7 @@ export class TaskDTO {
   @ApiProperty({ description: 'Date to complete ' })
   @IsNotEmpty()
   @IsString()
-  dateExpire: Date;
+  expireDate: Date;
 
   @ApiProperty({ description: 'Task priority' })
   @IsNotEmpty()

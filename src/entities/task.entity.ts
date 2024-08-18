@@ -22,7 +22,7 @@ export class TaskEntity extends BaseEntityCustom {
   @Column({ length: 10000 })
   description: string;
   @Column()
-  dateExpire: Date;
+  expireDate: Date;
   @Column({ default: 'MEDIUM' })
   priority: string;
   @Column({ default: 'TASK' })

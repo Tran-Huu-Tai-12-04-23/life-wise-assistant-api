@@ -129,7 +129,7 @@ export class TaskService {
         newTask.createdBy = user.id;
         newTask.createdByName = user.username;
         newTask.createdAt = new Date();
-        newTask.dateExpire = taskDTO.dateExpire;
+        newTask.expireDate = taskDTO.expireDate;
         newTask.cmdCheckOutBranch = `git checkout -b ${taskDTO.title}`;
         newTask.cmdCommit = `git commit -m "feature: ${taskDTO.title}"`;
         newTask.status = column.statusCode;
