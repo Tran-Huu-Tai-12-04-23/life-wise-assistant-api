@@ -141,6 +141,7 @@ export class TaskService {
         for (const comment of taskDTO.comments) {
           const newComment = new TaskCommentEntity();
           newComment.content = comment.content;
+          newComment.userId = user.id;
           newComment.taskId = newTask.id;
           newComment.createdBy = user.id;
           newComment.createdByName = user.username;

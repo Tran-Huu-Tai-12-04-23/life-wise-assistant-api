@@ -96,7 +96,7 @@ export class CommentDTO {
   @IsString()
   content: string;
   @ApiProperty({ description: 'Owner of comment' })
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   OwnerId: string;
 }
