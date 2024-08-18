@@ -1,8 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { enumData } from 'src/constants/enum-data';
-import { UserEntity } from 'src/entities';
+import { ColumnEntity, UserEntity } from 'src/entities';
+import { SubTaskEntity } from 'src/entities/subTask.entity';
 import { TaskEntity } from 'src/entities/task.entity';
+import { TaskCommentEntity } from 'src/entities/taskComment.entity';
+import { TaskFileEntity } from 'src/entities/taskFile.entity';
+import { TaskHistoryEntity } from 'src/entities/taskHistory.entity';
 import { coreHelper } from 'src/helpers';
 import { TaskRepository, UserRepository } from 'src/repositories';
 import { Between, In, Like, MoreThan } from 'typeorm';
@@ -87,71 +91,134 @@ export class TaskService {
   }
 
   async create(taskDTO: TaskDTO, user: UserDataDTO) {
-    const column: any = await this.columnRepository.findOne({
-      where: { id: taskDTO.columnId },
-      relations: { tasks: true },
-    });
+    return await this.taskRepository.manager.transaction(
+      async (transaction) => {
+        const taskRepo = transaction.getRepository(TaskEntity);
+        const taskCommentRepo = transaction.getRepository(TaskCommentEntity);
+        const taskFileRepo = transaction.getRepository(TaskFileEntity);
+        const taskHistoryRepo = transaction.getRepository(TaskHistoryEntity);
+        const subTaskRepo = transaction.getRepository(SubTaskEntity);
+        const columnRepo = transaction.getRepository(ColumnEntity);
+        const column: any = await columnRepo.findOne({
+          where: { id: taskDTO.columnId },
+          relations: { tasks: true },
+        });
 
-    if (column == null) {
-      throw new Error('Column not found!');
-    }
+        if (column == null) {
+          throw new Error('Column not found!');
+        }
 
-    const lstPersonInCharge = await this.userRepository.find({
-      where: {
-        id: In([...taskDTO.lstPersonInCharge]),
-        isDeleted: false,
+        const lstPersonInCharge = await this.userRepository.find({
+          where: {
+            id: In([...taskDTO.lstPersonInCharge]),
+            isDeleted: false,
+          },
+        });
+        //#region  create new task
+        const newIndexTask = column.__tasks__.length + 1;
+        const newTask = new TaskEntity();
+
+        newTask.index = newIndexTask;
+        newTask.priority = taskDTO.priority;
+        newTask.type = taskDTO.type;
+        newTask.title = taskDTO.title;
+        newTask.description = taskDTO.description;
+        newTask.sourceCodeLink = taskDTO.sourceCodeLink;
+        newTask.column = Promise.resolve(column);
+        newTask.lstPersonInCharge = Promise.resolve(lstPersonInCharge);
+        newTask.createdBy = user.id;
+        newTask.createdByName = user.username;
+        newTask.createdAt = new Date();
+        newTask.dateExpire = taskDTO.dateExpire;
+        newTask.cmdCheckOutBranch = `git checkout -b ${taskDTO.title}`;
+        newTask.cmdCommit = `git commit -m "feature: ${taskDTO.title}"`;
+        newTask.status = column.statusCode;
+
+        await taskRepo.save(newTask);
+        //#endregion
+
+        //#region  add task comment
+        for (const comment of taskDTO.comments) {
+          const newComment = new TaskCommentEntity();
+          newComment.content = comment.content;
+          newComment.taskId = newTask.id;
+          newComment.createdBy = user.id;
+          newComment.createdByName = user.username;
+          newComment.createdAt = new Date();
+          await taskCommentRepo.save(newComment);
+        }
+        //#endregion
+
+        //#region  add sub task
+        for (const subTask of taskDTO.subTasks) {
+          const newSubTask = new SubTaskEntity();
+          newSubTask.name = subTask.name;
+          newSubTask.taskId = newTask.id;
+          newSubTask.isChecked = subTask.isChecked;
+          newSubTask.createdBy = user.id;
+          newSubTask.createdByName = user.username;
+          newSubTask.createdAt = new Date();
+          await subTaskRepo.save(newSubTask);
+        }
+        //#endregion
+
+        //#region  add task file
+        for (const file of taskDTO.taskFile) {
+          const newFile = new TaskFileEntity();
+          newFile.fileLink = file.fileLink;
+          newFile.taskId = newTask.id;
+          newFile.createdBy = user.id;
+          newFile.createdByName = user.username;
+          newFile.createdAt = new Date();
+          await taskFileRepo.save(newFile);
+        }
+        //#endregion
+
+        //#region  add task history
+        const newTaskHistory = new TaskHistoryEntity();
+        newTaskHistory.taskId = newTask.id;
+        newTaskHistory.createdBy = user.id;
+        newTaskHistory.createdByName = user.username;
+        newTaskHistory.createdAt = new Date();
+        newTaskHistory.description =
+          'User ' +
+          user.username +
+          ' create new task at ' +
+          new Date().toString();
+        await taskHistoryRepo.save(newTaskHistory);
+        //#endregion
+
+        //#region  log to discord
+        const taskLog: TaskLogDTO = {
+          taskName: newTask.title,
+          memberName: user.userDetail?.fullName || user.username,
+          link: this.FRONT_END_LINK + '/tasks/' + newTask.id,
+          statusName: newTask.status,
+          message:
+            user.userDetail?.fullName ||
+            user.username + ' create new task at ' + new Date().toString(),
+          timeString: new Date().toString(),
+        };
+        await this.discordService.taskLog(taskLog);
+        //#endregion
+
+        //#region return detail task
+        const taskDetail: any = await taskRepo.findOne({
+          where: { id: newTask.id, isDeleted: false },
+          relations: {
+            lstPersonInCharge: true,
+          },
+        });
+        const lstMember = taskDetail.__lstPersonInCharge__;
+        delete taskDetail.__lstMember__;
+        //#endregion
+
+        return {
+          message: 'Task created successfully',
+          data: { ...taskDetail, lstMember },
+        };
       },
-    });
-
-    const newIndexTask = column.__tasks__.length + 1;
-    const newTask = new TaskEntity();
-
-    newTask.index = newIndexTask;
-    newTask.priority = taskDTO.priority;
-    newTask.type = taskDTO.type;
-    newTask.title = taskDTO.title;
-    newTask.description = taskDTO.description;
-    newTask.fileLink = taskDTO.fileLink;
-    newTask.sourceCodeLink = taskDTO.sourceCodeLink;
-    newTask.column = Promise.resolve(column);
-    newTask.lstPersonInCharge = Promise.resolve(lstPersonInCharge);
-    newTask.createdBy = user.id;
-    newTask.createdByName = user.username;
-    newTask.createdAt = new Date();
-    newTask.dateExpire = taskDTO.dateExpire;
-    newTask.cmdCheckOutBranch = `git checkout -b ${taskDTO.title}`;
-    newTask.cmdCommit = `git commit -m "feature: ${taskDTO.title}"`;
-    newTask.status = column.statusCode;
-
-    const task = await this.taskRepository.save(newTask);
-
-    const taskLog: TaskLogDTO = {
-      taskName: task.title,
-      memberName: user.userDetail?.fullName || user.username,
-      link: this.FRONT_END_LINK + '/tasks/' + task.id,
-      statusName: task.status,
-      message:
-        user.userDetail?.fullName ||
-        user.username + ' create new task at ' + new Date().toString(),
-      timeString: new Date().toString(),
-    };
-
-    await this.discordService.taskLog(taskLog);
-
-    const taskDetail: any = await this.taskRepository.findOne({
-      where: { id: task.id, isDeleted: false },
-      relations: {
-        lstPersonInCharge: true,
-      },
-    });
-
-    const lstMember = taskDetail.__lstPersonInCharge__;
-
-    delete taskDetail.__lstMember__;
-    return {
-      message: 'Task created successfully',
-      data: { ...taskDetail, lstMember },
-    };
+    );
   }
 
   // move task in the same column and in the same team

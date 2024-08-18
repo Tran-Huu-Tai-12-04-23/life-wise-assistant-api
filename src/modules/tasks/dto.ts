@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsArray,
+  IsBoolean,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -35,14 +36,9 @@ export class TaskDTO {
   type: string;
 
   @ApiProperty({ description: 'Lst person in charge' })
-  @IsNotEmpty()
+  @IsOptional()
   @IsArray()
   lstPersonInCharge: string[];
-
-  @ApiProperty({ description: 'File document in link' })
-  @IsOptional()
-  @IsString()
-  fileLink: string;
 
   @ApiProperty({ description: 'Link source code' })
   @IsOptional()
@@ -53,6 +49,56 @@ export class TaskDTO {
   @IsNotEmpty()
   @IsString()
   columnId: string;
+
+  @ApiProperty({ description: 'Comments of task ' })
+  @IsOptional()
+  @IsArray()
+  comments: CommentDTO[];
+
+  @ApiProperty({ description: 'SubTasks of task ' })
+  @IsOptional()
+  @IsArray()
+  subTasks: SubTaskDTO[];
+
+  @ApiProperty({ description: 'File link of task ' })
+  @IsOptional()
+  @IsArray()
+  taskFile: TaskFileDTO[];
+}
+
+export class TaskFileDTO {
+  @ApiProperty({ description: 'File document in link' })
+  @IsNotEmpty()
+  @IsString()
+  fileLink: string;
+
+  @ApiProperty({ description: 'Name of link' })
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+}
+
+export class SubTaskDTO {
+  @ApiProperty({ description: 'SubTask name' })
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+
+  @ApiProperty({ description: 'Is done ' })
+  @IsNotEmpty()
+  @IsBoolean()
+  isChecked: boolean;
+}
+
+export class CommentDTO {
+  @ApiProperty({ description: 'Comment content' })
+  @IsNotEmpty()
+  @IsString()
+  content: string;
+  @ApiProperty({ description: 'Owner of comment' })
+  @IsNotEmpty()
+  @IsString()
+  OwnerId: string;
 }
 export class ChangeStatusTaskDTO {
   @ApiProperty({ description: 'Task id' })

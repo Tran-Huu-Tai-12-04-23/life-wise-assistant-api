@@ -5,10 +5,15 @@ import {
   JoinTable,
   ManyToMany,
   ManyToOne,
+  OneToMany,
 } from 'typeorm';
-import { ColumnEntity } from './column.entity';
-import { UserEntity } from './user.entity';
 import { BaseEntityCustom } from './base.entity';
+import { ColumnEntity } from './column.entity';
+import { SubTaskEntity } from './subTask.entity';
+import { TaskCommentEntity } from './taskComment.entity';
+import { TaskFileEntity } from './taskFile.entity';
+import { TaskHistoryEntity } from './taskHistory.entity';
+import { UserEntity } from './user.entity';
 
 @Entity(`Tasks`)
 export class TaskEntity extends BaseEntityCustom {
@@ -40,4 +45,16 @@ export class TaskEntity extends BaseEntityCustom {
   @ManyToOne(() => ColumnEntity, (column) => column.tasks)
   @JoinColumn({ name: 'columnId', referencedColumnName: 'id' })
   column: Promise<ColumnEntity>;
+
+  @OneToMany(() => SubTaskEntity, (subTask) => subTask.task)
+  subTasks: Promise<SubTaskEntity[]>;
+
+  @OneToMany(() => TaskHistoryEntity, (taskHistory) => taskHistory.task)
+  history: Promise<TaskHistoryEntity[]>;
+
+  @OneToMany(() => TaskCommentEntity, (taskComment) => taskComment.task)
+  comments: Promise<TaskCommentEntity[]>;
+
+  @OneToMany(() => TaskFileEntity, (taskFile) => taskFile.task)
+  taskFiles: Promise<TaskFileEntity[]>;
 }
