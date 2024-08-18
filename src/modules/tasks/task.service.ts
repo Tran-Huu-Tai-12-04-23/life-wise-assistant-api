@@ -171,6 +171,7 @@ export class TaskService {
           newFile.createdBy = user.id;
           newFile.createdByName = user.username;
           newFile.createdAt = new Date();
+          newFile.name = file.name;
           await taskFileRepo.save(newFile);
         }
         //#endregion
@@ -181,6 +182,7 @@ export class TaskService {
         newTaskHistory.createdBy = user.id;
         newTaskHistory.createdByName = user.username;
         newTaskHistory.createdAt = new Date();
+        newTaskHistory.title = 'Create new task';
         newTaskHistory.description =
           'User ' +
           user.username +
