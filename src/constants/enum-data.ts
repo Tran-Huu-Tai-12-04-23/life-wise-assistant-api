@@ -175,3 +175,7 @@ export enum EChatType {
   GROUP = 'group',
   SINGLE = 'single',
 }
+
+export const HISTORY_TYPE = {
+  USER_ACTION: 'USER_ACTION',
+};

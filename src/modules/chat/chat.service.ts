@@ -44,6 +44,7 @@ export class ChatService {
           isDeleted: false,
         },
       });
+
       groupChatEntity.lstMember = Promise.resolve(lstUser);
       groupChatEntity.createdBy = user.id;
       groupChatEntity.createdByName = user.username;

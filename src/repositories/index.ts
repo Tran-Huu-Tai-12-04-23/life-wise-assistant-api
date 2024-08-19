@@ -4,4 +4,6 @@ export * from './history.repository';
 export * from './message.repository';
 export * from './notification.repository';
 export * from './task.repository';
+export * from './taskComment.repository';
+export * from './taskHistory.repository';
 export * from './user.repository';
