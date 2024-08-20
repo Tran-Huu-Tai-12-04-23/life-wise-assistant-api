@@ -8,7 +8,14 @@ import {
 import { enumData } from 'src/constants/enum-data';
 import { UserEntity } from 'src/entities';
 import { ColumnEntity } from 'src/entities/column.entity';
-import { ColumnRepository, TaskRepository } from 'src/repositories';
+import { coreHelper } from 'src/helpers';
+import {
+  ColumnRepository,
+  TaskCommentRepository,
+  TaskRepository,
+} from 'src/repositories';
+import { SubTaskRepository } from 'src/repositories/subTask.repository';
+import { TaskFileRepository } from 'src/repositories/taskFile.repository';
 import { TeamRepository } from 'src/repositories/team.repository';
 import { Between, In, Like } from 'typeorm';
 import {
@@ -23,6 +30,9 @@ export class ColumnService {
     private readonly columnRepository: ColumnRepository,
     private readonly teamRepository: TeamRepository,
     private readonly taskRepository: TaskRepository,
+    private readonly taskCommentRepo: TaskCommentRepository,
+    private readonly subTaskRepo: SubTaskRepository,
+    private readonly taskFileRepo: TaskFileRepository,
   ) {}
   async getDataToFIlter(getDataToFilter: GetDataToFilterDTO) {
     const columns = await this.columnRepository.find({
@@ -207,18 +217,52 @@ export class ColumnService {
           ...col,
           color,
           background,
-          tasks: tasks.map((tas: any) => {
-            const members = tas.__lstPersonInCharge__;
-            delete tas.__lstPersonInCharge__;
-            const statusEnum = enumData.taskStatus[tas.status as 'PENDING'];
-            return {
-              ...tas,
-              lstMember: members,
-              statusName: statusEnum.name,
-              statusColor: statusEnum.color,
-              statusBackground: statusEnum.background,
-            };
-          }),
+          tasks: await Promise.all(
+            tasks.map(async (tas: any) => {
+              const [totalComment, totalTaskFile, totalSubTask] =
+                await Promise.all([
+                  this.taskCommentRepo.count({
+                    where: {
+                      isDeleted: false,
+                      taskId: tas.id,
+                    },
+                  }),
+                  this.taskFileRepo.count({
+                    where: {
+                      isDeleted: false,
+                      taskId: tas.id,
+                    },
+                  }),
+                  this.subTaskRepo.count({
+                    where: {
+                      isDeleted: false,
+                      taskId: tas.id,
+                    },
+                  }),
+                ]);
+              const lstMember = tas.__lstPersonInCharge__;
+              delete tas.__lstPersonInCharge__;
+              const statusOfTask = coreHelper.getStatusOfTask(tas.status);
+              const priorityOfTask = coreHelper.getPriorityOfTask(tas.priority);
+              const typeOfTask = coreHelper.getTypeOfTask(tas.type);
+              return {
+                ...tas,
+                lstMember,
+                statusName: statusOfTask?.name,
+                statusColor: statusOfTask?.color,
+                statusBackground: statusOfTask?.background,
+                priorityName: priorityOfTask?.name,
+                priorityColor: priorityOfTask?.color,
+                priorityBackground: priorityOfTask?.background,
+                typeName: typeOfTask?.name,
+                typeColor: typeOfTask?.color,
+                typeBackground: typeOfTask?.background,
+                totalComment,
+                totalTaskFile,
+                totalSubTask,
+              };
+            }),
+          ),
         };
       }),
     );

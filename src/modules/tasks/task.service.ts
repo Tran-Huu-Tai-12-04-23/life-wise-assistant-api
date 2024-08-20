@@ -8,7 +8,13 @@ import { TaskCommentEntity } from 'src/entities/taskComment.entity';
 import { TaskFileEntity } from 'src/entities/taskFile.entity';
 import { TaskHistoryEntity } from 'src/entities/taskHistory.entity';
 import { coreHelper } from 'src/helpers';
-import { TaskRepository, UserRepository } from 'src/repositories';
+import {
+  TaskCommentRepository,
+  TaskRepository,
+  UserRepository,
+} from 'src/repositories';
+import { SubTaskRepository } from 'src/repositories/subTask.repository';
+import { TaskFileRepository } from 'src/repositories/taskFile.repository';
 import { Between, In, Like, MoreThan } from 'typeorm';
 import { UserDataDTO } from '../auth/dto';
 import { DiscordService } from '../discord/discord.service';
@@ -30,6 +36,9 @@ export class TaskService {
     private readonly userRepository: UserRepository,
     private readonly discordService: DiscordService,
     private readonly configService: ConfigService,
+    private readonly taskCommentRepo: TaskCommentRepository,
+    private readonly subTaskRepo: SubTaskRepository,
+    private readonly taskFileRepo: TaskFileRepository,
   ) {}
 
   FRONT_END_LINK = this.configService.get<string>('FRONT_END_LINK');
@@ -66,12 +75,32 @@ export class TaskService {
       take: taskPaginationDTO.take,
     });
 
-    const resultTask = tasks[0].map((task: any) => {
+    const resultTask = tasks[0].map(async (task: any) => {
+      const [totalComment, totalTaskFile, totalSubTask] = await Promise.all([
+        this.taskCommentRepo.count({
+          where: {
+            isDeleted: false,
+            taskId: task.id,
+          },
+        }),
+        this.taskFileRepo.count({
+          where: {
+            isDeleted: false,
+            taskId: task.id,
+          },
+        }),
+        this.subTaskRepo.count({
+          where: {
+            isDeleted: false,
+            taskId: task.id,
+          },
+        }),
+      ]);
       const lstPersonInCharge = task.__lstPersonInCharge__;
       delete task.__lstPersonInCharge__;
       const statusOfTask = coreHelper.getStatusOfTask(task.status);
       const priorityOfTask = coreHelper.getPriorityOfTask(task.priority);
-      const typeOfTask = coreHelper.getPriorityOfTask(task.type);
+      const typeOfTask = coreHelper.getTypeOfTask(task.type);
       return {
         lstPersonInCharge,
         ...task,
@@ -84,6 +113,9 @@ export class TaskService {
         typeName: typeOfTask?.name,
         typeColor: typeOfTask?.color,
         typeBackground: typeOfTask?.background,
+        totalComment,
+        totalTaskFile,
+        totalSubTask,
       };
     });
 
@@ -215,10 +247,29 @@ export class TaskService {
         const lstMember = taskDetail.__lstPersonInCharge__;
         delete taskDetail.__lstMember__;
         //#endregion
-
+        const statusOfTask = coreHelper.getStatusOfTask(taskDetail.status);
+        const priorityOfTask = coreHelper.getPriorityOfTask(
+          taskDetail.priority,
+        );
+        const typeOfTask = coreHelper.getTypeOfTask(taskDetail.type);
         return {
           message: 'Task created successfully',
-          data: { ...taskDetail, lstMember },
+          data: {
+            ...taskDetail,
+            lstMember,
+            statusName: statusOfTask?.name,
+            statusColor: statusOfTask?.color,
+            statusBackground: statusOfTask?.background,
+            priorityName: priorityOfTask?.name,
+            priorityColor: priorityOfTask?.color,
+            priorityBackground: priorityOfTask?.background,
+            typeName: typeOfTask?.name,
+            typeColor: typeOfTask?.color,
+            typeBackground: typeOfTask?.background,
+            totalComment: taskDTO.comments.length,
+            totalTaskFile: taskDTO.taskFile.length,
+            totalSubTask: taskDTO.subTasks.length,
+          },
         };
       },
     );
