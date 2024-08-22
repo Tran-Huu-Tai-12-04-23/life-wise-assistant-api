@@ -43,6 +43,88 @@ export class TaskService {
 
   FRONT_END_LINK = this.configService.get<string>('FRONT_END_LINK');
 
+  async detail(id: string, teamId: string, user: UserEntity) {
+    const task: any = await this.taskRepository.findOne({
+      where: {
+        id,
+        column: {
+          team: {
+            id: teamId,
+          },
+        },
+        isDeleted: false,
+      },
+      relations: {
+        lstPersonInCharge: true,
+        taskFiles: true,
+        subTasks: true,
+        history: true,
+        comments: {
+          owner: true,
+        },
+      },
+    });
+
+    const checkPermission = task?.__lstPersonInCharge__.find(
+      (us: any) => us.id === user.id,
+    );
+
+    if (!checkPermission) throw new Error('Permission denied!');
+
+    const statusOfTask = coreHelper.getStatusOfTask(task.status);
+    const priorityOfTask = coreHelper.getPriorityOfTask(task.priority);
+    const typeOfTask = coreHelper.getTypeOfTask(task.type);
+
+    const lstPersonInCharge = task.__lstPersonInCharge__;
+
+    const res = {
+      ...task,
+      statusName: statusOfTask?.name,
+      statusColor: statusOfTask?.color,
+      statusBackground: statusOfTask?.background,
+      priorityName: priorityOfTask?.name,
+      priorityColor: priorityOfTask?.color,
+      priorityBackground: priorityOfTask?.background,
+      typeName: typeOfTask?.name,
+      typeColor: typeOfTask?.color,
+      type: typeOfTask,
+      priority: priorityOfTask,
+      status: statusOfTask,
+      typeBackground: typeOfTask?.background,
+      lstPersonInCharge,
+      members: lstPersonInCharge,
+      isOwner: task.createdBy === user.id,
+      totalComment: task.__taskComments__?.length,
+      totalSubTask: task.__subTasks__?.length,
+      comments: task.__comments__.map((comment: any) => {
+        const owner = comment.__owner__;
+        delete comment.__owner__;
+        return {
+          ...comment,
+          owner,
+        };
+      }),
+      subTask: task.__subTasks__,
+      history: task.__history__?.map((his: any) => {
+        const owner = lstPersonInCharge?.find(
+          (user: any) => user.id === his.createdBy,
+        );
+        return {
+          ...his,
+          owner,
+        };
+      }),
+      taskFile: task.__taskFiles__,
+    };
+
+    delete res.__lstPersonInCharge__;
+    delete res.__comments__;
+    delete res.__subTasks__;
+    delete res.__history__;
+    delete res.__taskFiles__;
+
+    return res;
+  }
   async pagination(taskPaginationDTO: TaskPaginationDTO) {
     const { status, teamId, columnId, userId, teamMemberId, search } =
       taskPaginationDTO;
@@ -178,6 +260,7 @@ export class TaskService {
           newComment.createdBy = user.id;
           newComment.createdByName = user.username;
           newComment.createdAt = new Date();
+          newComment.userId = comment.ownerId;
           await taskCommentRepo.save(newComment);
         }
         //#endregion

@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { enumData } from 'src/constants/enum-data';
 import { ColumnEntity, UserEntity } from 'src/entities';
 import { TeamEntity } from 'src/entities/team.entity';
@@ -12,11 +14,18 @@ import { InviteLstMemberDTO, RemoveUserTeamDTO, TeamDTO } from './dto';
 
 @Injectable()
 export class TeamsService {
+  inviteLink = '';
+  JWT_SECRET = '';
   constructor(
     private repo: TeamRepository,
     private userRepo: UserRepository,
     private columnService: ColumnService,
-  ) {}
+    private configService: ConfigService,
+    private jwtService: JwtService,
+  ) {
+    this.inviteLink = this.configService.get('INVITE_LINK') || '';
+    this.JWT_SECRET = this.configService.get<string>('JWT_SECRET') || '';
+  }
 
   async getYourWorkPlace(user: UserEntity) {
     return await this.repo.findOne({
@@ -54,10 +63,19 @@ export class TeamsService {
       const tags = team.tags.split(',').map((tag: string) => {
         const tagData =
           enumData.BOARD_TAG[tag.trim() as keyof typeof enumData.BOARD_TAG];
-
         return tagData;
       });
-      return { ...team, members: __members__, tags };
+      const isAllowInviteUser = team.createdBy === user.id;
+      const inviteTokenExpire = new Date(team.inviteTokenExpiredDate);
+      const now = new Date();
+
+      if (inviteTokenExpire < now) {
+        team.isExpiredInviteToken = false;
+      } else {
+        team.isExpiredInviteToken = true;
+      }
+
+      return { ...team, members: __members__, tags, isAllowInviteUser };
     });
 
     return [res, data[1]];
@@ -214,5 +232,77 @@ export class TeamsService {
     });
 
     return { message: 'Team detail', data: { ...team, users, tags } };
+  }
+
+  async generateInviteToken(teamId: string, user: UserEntity) {
+    const currentTeam = await this.repo.findOneBy({
+      id: teamId,
+      isDeleted: false,
+    });
+
+    if (!currentTeam) {
+      throw new Error('Team not found!');
+    }
+
+    if (currentTeam.createdBy !== user.id) {
+      throw new Error(
+        'You are not the owner of this team! Can not generate invite link!',
+      );
+    }
+
+    const inviteToken = this.jwtService.sign(
+      { teamId },
+      { secret: this.JWT_SECRET },
+    );
+
+    return await this.repo.manager.transaction(async (transaction) => {
+      const teamRepo = transaction.getRepository(TeamEntity);
+      const inviteTokenExpiredDate = new Date(Date.now() + 1000 * 60 * 60 * 24);
+      await teamRepo.update(teamId, {
+        ...currentTeam,
+        inviteToken,
+        inviteTokenExpiredDate: inviteTokenExpiredDate,
+      });
+
+      return {
+        inviteLink: `${this.inviteLink}${inviteToken}`,
+        inviteTokenExpiredDate,
+        message: 'Generate invite link successfully!',
+      };
+    });
+  }
+
+  async joinToTeamByLink(token: string, user: UserEntity) {
+    const payload = this.jwtService.verify(token, {
+      secret: this.JWT_SECRET,
+    });
+    if (!payload) {
+      throw new Error('Invalid token');
+    }
+    const { teamId } = payload;
+    const currentTeam: any = await this.repo.findOne({
+      where: {
+        id: teamId,
+        isDeleted: false,
+      },
+      relations: {
+        members: true,
+      },
+    });
+    if (!currentTeam) {
+      throw new Error('Team not found!');
+    }
+
+    const isExistTeam = currentTeam.__members__.find(
+      (u: any) => u.id === user.id,
+    );
+    if (!isExistTeam) {
+      await this.repo.update(teamId, {
+        ...currentTeam,
+        members: Promise.resolve([...(await currentTeam.members), user]),
+      });
+    }
+
+    return { message: 'Join team successfully!' };
   }
 }

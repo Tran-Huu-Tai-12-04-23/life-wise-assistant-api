@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import {
   ColumnRepository,
   TaskCommentRepository,
@@ -25,7 +27,7 @@ import { TeamsService } from './team.service';
       TaskFileRepository,
     ]),
   ],
-  providers: [TeamsService, ColumnService],
+  providers: [TeamsService, ColumnService, JwtService, ConfigService],
   controllers: [TeamController],
   exports: [TeamsService],
 })

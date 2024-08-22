@@ -15,7 +15,7 @@ import {
 import { enumData } from 'src/constants/enum-data';
 import { JWT_SECRET } from 'src/constants/key';
 import { UserEntity } from 'src/entities';
-import { Like, Not } from 'typeorm';
+import { In, Like, Not } from 'typeorm';
 import { PaginationDTO } from '../dto';
 
 @Injectable()
@@ -152,20 +152,27 @@ export class AuthService {
     user: UserEntity,
     data: PaginationDTO<FilterLstUserToInviteTeamDTO>,
   ) {
-    const where: any = {
-      id: Not([user.id, ...(data.where?.lstUserTeamExist || [])]),
-      isActive: true,
-      isDeleted: false,
-    };
+    const where: any = {};
     if (data.where?.name) {
       where.username = Like(`%${data.where.name}%`);
     }
+    const excludedIds = [user.id, ...(data.where?.lstUserExist || [])];
     const lstUser = await this.repo.findAndCount({
-      where: where,
+      where: {
+        ...where,
+        isActive: true,
+        isDeleted: false,
+        id: Not(In(excludedIds)),
+      },
       skip: data.skip,
       take: data.take,
     });
-    return lstUser;
+
+    const lstUserEntity = lstUser[0].filter((user) => {
+      return excludedIds.indexOf(user.id) === -1;
+    });
+
+    return [lstUserEntity, lstUser[1]];
   }
 
   async getUserById(id: string) {

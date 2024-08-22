@@ -14,13 +14,13 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { InviteLstMemberDTO, RemoveUserTeamDTO, TeamDTO } from './dto';
-import { TeamsService } from './team.service';
-import { JwtAuthGuard } from '../auth/jwt.auth.guard';
-import { CurrentUser } from 'src/helpers/decorators';
 import { UserEntity } from 'src/entities';
 import { TeamEntity } from 'src/entities/team.entity';
+import { CurrentUser } from 'src/helpers/decorators';
+import { JwtAuthGuard } from '../auth/jwt.auth.guard';
 import { PaginationDTO } from '../dto';
+import { InviteLstMemberDTO, RemoveUserTeamDTO, TeamDTO } from './dto';
+import { TeamsService } from './team.service';
 
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
@@ -28,6 +28,30 @@ import { PaginationDTO } from '../dto';
 @Controller('team')
 export class TeamController {
   constructor(private readonly service: TeamsService) {}
+
+  @ApiOperation({
+    summary: 'Generate invite link',
+  })
+  @ApiResponse({ status: 201, type: TeamEntity })
+  @Get('generate-invite-token/:teamId')
+  async generateInviteToken(
+    @Param('teamId') teamId: string,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return await this.service.generateInviteToken(teamId, user);
+  }
+
+  @ApiOperation({
+    summary: 'Join to team by invite link',
+  })
+  @ApiResponse({ status: 201, type: TeamEntity })
+  @Get('join-to-team/:token')
+  async joinToTeamByLink(
+    @Param('token') token: string,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return await this.service.joinToTeamByLink(token, user);
+  }
 
   @ApiOperation({
     summary: 'Create new team',

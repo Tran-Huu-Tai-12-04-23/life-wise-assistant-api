@@ -98,7 +98,7 @@ export class CommentDTO {
   @ApiProperty({ description: 'Owner of comment' })
   @IsOptional()
   @IsString()
-  OwnerId: string;
+  ownerId: string;
 }
 export class ChangeStatusTaskDTO {
   @ApiProperty({ description: 'Task id' })

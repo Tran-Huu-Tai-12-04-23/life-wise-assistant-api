@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   Post,
   Put,
@@ -34,8 +35,18 @@ export class TaskController {
   constructor(private readonly service: TaskService) {}
 
   @ApiOperation({
-    summary: 'Pagination for task',
+    summary: 'task detail',
   })
+  @ApiResponse({ status: 201 })
+  @Get('/:id/:teamId')
+  async detail(
+    @Param('id') id: string,
+    @Param('teamId') teamId: string,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return await this.service.detail(id, teamId, user);
+  }
+
   @ApiResponse({ status: 201 })
   @Post('/pagination')
   async pagination(@Body() taskPaginationDTO: TaskPaginationDTO) {
@@ -53,6 +64,7 @@ export class TaskController {
   ) {
     return await this.service.create(taskDTO, user);
   }
+
   @ApiOperation({
     summary: 'Move task in the same column',
   })

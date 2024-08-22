@@ -170,7 +170,8 @@ export class AuthController {
         if (err || !user) {
           return res.redirect('/login?error=auth_failed');
         }
-        const signupDTO = await this.service.convertJsonFacebookToSignUpDTO(user);
+        const signupDTO =
+          await this.service.convertJsonFacebookToSignUpDTO(user);
         if (await this.service.checkUserExist(signupDTO.username)) {
           const signInDto =
             await this.service.convertSignUpDTOToSignInDTO(signupDTO);
@@ -188,7 +189,6 @@ export class AuthController {
       },
     )(req, res);
   }
-
 
   @ApiOperation({
     summary: 'Refresh ac token when ac token expired',

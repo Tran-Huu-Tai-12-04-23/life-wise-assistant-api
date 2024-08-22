@@ -5,7 +5,7 @@ export class FilterLstUserToInviteTeamDTO {
   @ApiProperty({ description: 'List user id' })
   @IsOptional()
   @IsString()
-  lstUserTeamExist: string[];
+  lstUserExist: string[];
 
   @ApiProperty({ description: 'Name of user' })
   @IsOptional()

@@ -1,14 +1,16 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   JoinTable,
   ManyToMany,
   OneToMany,
 } from 'typeorm';
-import { UserEntity } from './user.entity';
 import { BaseEntityCustom } from './base.entity';
 import { ColumnEntity } from './column.entity';
+import { UserEntity } from './user.entity';
 
 @Entity(`Teams`)
 export class TeamEntity extends BaseEntityCustom {
@@ -26,6 +28,16 @@ export class TeamEntity extends BaseEntityCustom {
 
   @Column()
   isWorkPlace: boolean;
+
+  @Column()
+  @ApiProperty({ description: 'Invite token' })
+  @Column({ nullable: true })
+  inviteToken: string;
+
+  @ApiProperty({ description: 'Invite token expired date' })
+  @Column({ nullable: false })
+  @CreateDateColumn()
+  inviteTokenExpiredDate: Date;
 
   @ManyToMany(() => UserEntity, (user) => user.teams)
   @JoinTable()
