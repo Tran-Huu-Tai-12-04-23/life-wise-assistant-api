@@ -46,7 +46,7 @@ export class TaskController {
     summary: 'Get sub task pagination',
   })
   @ApiResponse({ status: 201 })
-  @Get('sub-task-pagination')
+  @Post('sub-task-pagination')
   async subTaskPagination(@Body() data: PaginationDTO) {
     return await this.service.subTaskPagination(data);
   }
@@ -55,7 +55,7 @@ export class TaskController {
     summary: 'Get task file pagination',
   })
   @ApiResponse({ status: 201 })
-  @Get('task-file-pagination')
+  @Post('task-file-pagination')
   async taskFilePagination(@Body() data: PaginationDTO) {
     return await this.service.taskFilePagination(data);
   }
@@ -64,9 +64,18 @@ export class TaskController {
     summary: 'Get task comment pagination',
   })
   @ApiResponse({ status: 201 })
-  @Get('task-comment-pagination')
+  @Post('task-comment-pagination')
   async taskCommentPagination(@Body() data: PaginationDTO) {
     return await this.service.taskCommentPagination(data);
+  }
+
+  @ApiOperation({
+    summary: 'Get task comment pagination',
+  })
+  @ApiResponse({ status: 201 })
+  @Post('task-history-pagination')
+  async taskHistoryPagination(@Body() data: PaginationDTO) {
+    return await this.service.taskHistoryPagination(data);
   }
   // #endregion
 

@@ -53,60 +53,81 @@ export class TaskService {
 
   // #region pagination reference of task
   async subTaskPagination(data: PaginationDTO) {
+    const { take, skip } = data;
     if (!data.where.taskId) throw new Error('Task id not found!');
-    const subTaskPagination = await this.subTaskRepo.find({
+    const subTaskPagination = await this.subTaskRepo.findAndCount({
       where: {
         taskId: data.where.taskId,
         isDeleted: false,
       },
       take: data.take,
       skip: data.skip,
+      order: {
+        createdAt: 'DESC',
+      },
     });
 
-    return subTaskPagination;
+    const isHasNextPage = !(take * (skip / take) >= subTaskPagination[1]);
+    return [...subTaskPagination, isHasNextPage];
   }
 
   async taskFilePagination(data: PaginationDTO) {
+    const { take, skip } = data;
     if (!data.where.taskId) throw new Error('Column id not found!');
-    const taskFileData = await this.taskFileRepo.find({
+    const taskFileData = await this.taskFileRepo.findAndCount({
       where: {
         taskId: data.where.taskId,
         isDeleted: false,
       },
       take: data.take,
       skip: data.skip,
+      order: {
+        createdAt: 'DESC',
+      },
     });
-
-    return taskFileData;
+    const isHasNextPage = !(take * (skip / take) >= taskFileData[1]);
+    return [...taskFileData, isHasNextPage];
   }
 
   async taskCommentPagination(data: PaginationDTO) {
+    const { take, skip } = data;
     if (!data.where.taskId) throw new Error('Column id not found!');
-    const taskCommentData = await this.taskCommentRepo.find({
+    const taskCommentData = await this.taskCommentRepo.findAndCount({
       where: {
         taskId: data.where.taskId,
         isDeleted: false,
       },
       take: data.take,
       skip: data.skip,
+      order: {
+        createdAt: 'DESC',
+      },
+      relations: {
+        owner: true,
+      },
     });
-    return taskCommentData;
+    const isHasNextPage = !(take * (skip / take) >= taskCommentData[1]);
+    return [...taskCommentData, isHasNextPage];
   }
 
   async taskHistoryPagination(data: PaginationDTO) {
+    const { take, skip } = data;
     if (!data.where.taskId) throw new Error('Task id not found!');
-    const taskHistoryData = await this.taskCommentRepo.find({
+    const taskHistoryData = await this.taskCommentRepo.findAndCount({
       where: {
         taskId: data.where.taskId,
         isDeleted: false,
       },
       take: data.take,
       skip: data.skip,
+      order: {
+        createdAt: 'DESC',
+      },
     });
-    return taskHistoryData;
+    const isHasNextPage = !(take * (skip / take) >= taskHistoryData[1]);
+    return [...taskHistoryData, isHasNextPage];
   }
   //#endregion
-
   // #region  update reference task task file comment sub task
   // crud sub task
   async removeSubTask(subTaskId: string, user: UserEntity) {
@@ -583,12 +604,6 @@ export class TaskService {
       },
       relations: {
         lstPersonInCharge: true,
-        taskFiles: true,
-        subTasks: true,
-        history: true,
-        comments: {
-          owner: true,
-        },
       },
     });
 
@@ -622,32 +637,9 @@ export class TaskService {
       lstPersonInCharge,
       members: lstPersonInCharge,
       isOwner: task.createdBy === user.id,
-      totalComment: task.__taskComments__?.length,
-      totalSubTask: task.__subTasks__?.length,
-      comments: task.__comments__.map((comment: any) => {
-        return {
-          ...comment,
-          owner: comment.owner,
-        };
-      }),
-      subTask: task.__subTasks__,
-      history: task.__history__?.map((his: any) => {
-        const owner = lstPersonInCharge?.find(
-          (user: any) => user.id === his.createdBy,
-        );
-        return {
-          ...his,
-          owner,
-        };
-      }),
-      taskFile: task.__taskFiles__,
     };
 
     delete res.__lstPersonInCharge__;
-    delete res.__comments__;
-    delete res.__subTasks__;
-    delete res.__history__;
-    delete res.__taskFiles__;
 
     return res;
   }
