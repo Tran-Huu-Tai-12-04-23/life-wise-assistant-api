@@ -1,3 +1,4 @@
+import { IsNumber } from 'class-validator';
 import {
   Column,
   Entity,
@@ -57,4 +58,16 @@ export class TaskEntity extends BaseEntityCustom {
 
   @OneToMany(() => TaskFileEntity, (taskFile) => taskFile.task)
   taskFiles: Promise<TaskFileEntity[]>;
+
+  @Column()
+  @IsNumber()
+  totalComment: number;
+
+  @Column()
+  @IsNumber()
+  totalTaskFile: number;
+
+  @Column()
+  @IsNumber()
+  totalSubTask: number;
 }

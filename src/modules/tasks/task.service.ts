@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as moment from 'moment';
 import { enumData } from 'src/constants/enum-data';
 import { ColumnEntity, UserEntity } from 'src/entities';
 import { SubTaskEntity } from 'src/entities/subTask.entity';
@@ -27,7 +28,13 @@ import {
   TaskDTO,
   TaskPaginationDTO,
 } from './dto';
-
+import {
+  AddSubTaskDTO,
+  AddTaskCommentDTO,
+  AddTaskFileDTO,
+  EditTaskCommentDTO,
+  UpdateTaskDTO,
+} from './updateTask.dto';
 @Injectable()
 export class TaskService {
   constructor(
@@ -43,6 +50,469 @@ export class TaskService {
 
   FRONT_END_LINK = this.configService.get<string>('FRONT_END_LINK');
 
+  // #region  update reference task task file comment sub task
+  // crud sub task
+  async removeSubTask(subTaskId: string, user: UserEntity) {
+    return await this.taskRepository.manager.transaction(
+      async (transaction) => {
+        const subTaskRepo = transaction.getRepository(SubTaskEntity);
+        const taskHistoryRepo = transaction.getRepository(TaskHistoryEntity);
+        const taskRepo = transaction.getRepository(TaskEntity);
+
+        const subTask: any = await subTaskRepo.findOne({
+          where: { id: subTaskId, isDeleted: false },
+          relations: {
+            task: true,
+          },
+        });
+
+        if (!subTask) {
+          throw new Error('Sub task not found!');
+        }
+
+        const task = subTask.__task__;
+        task.totalSubTask = task.totalSubTask - 1;
+        await taskRepo.save(task);
+        await subTaskRepo.delete(subTaskId);
+
+        // create history
+        const newTaskHistory = new TaskHistoryEntity();
+        newTaskHistory.taskId = subTaskId;
+        newTaskHistory.createdBy = user.id;
+        newTaskHistory.createdByName = user.username;
+        newTaskHistory.createdAt = new Date();
+        newTaskHistory.title = 'Remove sub task';
+        newTaskHistory.description =
+          'User ' +
+          user.username +
+          ' remove sub task at ' +
+          moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        await taskHistoryRepo.save(newTaskHistory);
+      },
+    );
+  }
+  async addSubTask(data: AddSubTaskDTO, user: UserEntity) {
+    return await this.taskRepository.manager.transaction(
+      async (transaction) => {
+        const subTaskRepo = transaction.getRepository(SubTaskEntity);
+        const taskHistoryRepo = transaction.getRepository(TaskHistoryEntity);
+        const taskRepo = transaction.getRepository(TaskEntity);
+
+        const task = await taskRepo.findOne({
+          where: { id: data.taskId, isDeleted: false },
+        });
+
+        if (!task) {
+          throw new Error('Task not found!');
+        }
+
+        task.totalSubTask = task.totalSubTask + 1;
+        await taskRepo.save(task);
+
+        const newSubTask = new SubTaskEntity();
+        newSubTask.name = data.data.name;
+        newSubTask.taskId = data.taskId;
+        newSubTask.isChecked = data.data.isChecked;
+        newSubTask.createdBy = user.id;
+        newSubTask.createdByName = user.username;
+        newSubTask.createdAt = new Date();
+        await subTaskRepo.save(newSubTask);
+
+        // create history
+        const newTaskHistory = new TaskHistoryEntity();
+        newTaskHistory.taskId = data.taskId;
+        newTaskHistory.createdBy = user.id;
+        newTaskHistory.createdByName = user.username;
+        newTaskHistory.createdAt = new Date();
+        newTaskHistory.title = 'Add sub task';
+        newTaskHistory.description =
+          'User ' +
+          user.username +
+          ' add sub task at ' +
+          moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        await taskHistoryRepo.save(newTaskHistory);
+
+        return {
+          message: 'Sub task added successfully!',
+          data: {
+            newSubTask: newSubTask,
+            newHistory: newTaskHistory,
+          },
+        };
+      },
+    );
+  }
+  async toggleSubTask(subTaskId: string, user: UserEntity) {
+    return await this.taskRepository.manager.transaction(
+      async (transaction) => {
+        const subTaskRepo = transaction.getRepository(SubTaskEntity);
+        const taskHistoryRepo = transaction.getRepository(TaskHistoryEntity);
+
+        const subTask: any = await subTaskRepo.findOne({
+          where: { id: subTaskId, isDeleted: false },
+        });
+
+        if (!subTask) {
+          throw new Error('Sub task not found!');
+        }
+
+        subTask.isChecked = !subTask.isChecked;
+        await subTaskRepo.save(subTask);
+
+        // create history
+        const newTaskHistory = new TaskHistoryEntity();
+        newTaskHistory.taskId = subTaskId;
+        newTaskHistory.createdBy = user.id;
+        newTaskHistory.createdByName = user.username;
+        newTaskHistory.createdAt = new Date();
+        newTaskHistory.title = 'Toggle sub task';
+        newTaskHistory.description =
+          'User ' +
+          user.username +
+          ' toggle sub task at ' +
+          moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        await taskHistoryRepo.save(newTaskHistory);
+
+        return {
+          message: 'Sub task toggled successfully!',
+          data: {
+            newSubTask: subTask,
+            newHistory: newTaskHistory,
+          },
+        };
+      },
+    );
+  }
+
+  // crud task comment
+  async editTaskComment(data: EditTaskCommentDTO, user: UserEntity) {
+    return await this.taskRepository.manager.transaction(
+      async (transaction) => {
+        const taskCommentRepo = transaction.getRepository(TaskCommentEntity);
+        const taskHistoryRepo = transaction.getRepository(TaskHistoryEntity);
+
+        const taskComment: any = await taskCommentRepo.findOne({
+          where: { id: data.commentId, isDeleted: false },
+        });
+
+        if (!taskComment) {
+          throw new Error('Task comment not found!');
+        }
+
+        taskComment.content = data.content;
+        taskComment.updatedBy = user.id;
+        taskComment.updatedAt = new Date();
+        await taskCommentRepo.save(taskComment);
+
+        // create history
+        const newTaskHistory = new TaskHistoryEntity();
+        newTaskHistory.taskId = data.taskId;
+        newTaskHistory.createdBy = user.id;
+        newTaskHistory.createdByName = user.username;
+        newTaskHistory.createdAt = new Date();
+        newTaskHistory.title = 'Edit task comment';
+        newTaskHistory.description =
+          'User ' +
+          user.username +
+          ' edit task comment at ' +
+          moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        await taskHistoryRepo.save(newTaskHistory);
+      },
+    );
+  }
+  async addTaskComment(taskComment: AddTaskCommentDTO, user: UserEntity) {
+    const task = await this.taskRepository.findOneBy({
+      id: taskComment.taskId,
+      isDeleted: false,
+    });
+    if (!task) {
+      throw new Error('Task not found!');
+    }
+
+    return await this.taskRepository.manager.transaction(
+      async (transaction) => {
+        const taskCommentRepo = transaction.getRepository(TaskCommentEntity);
+        const taskHistoryRepo = transaction.getRepository(TaskHistoryEntity);
+        const taskRepo = transaction.getRepository(TaskEntity);
+
+        task.totalComment = task.totalComment + 1;
+        await taskRepo.save(task);
+
+        const newTaskComment = new TaskCommentEntity();
+        newTaskComment.content = taskComment.content;
+        newTaskComment.taskId = taskComment.taskId;
+        newTaskComment.createdBy = user.id;
+        newTaskComment.createdByName = user.username;
+        newTaskComment.createdAt = new Date();
+        newTaskComment.userId = user.id;
+        await taskCommentRepo.save(newTaskComment);
+
+        // create history
+        const newTaskHistory = new TaskHistoryEntity();
+        newTaskHistory.taskId = taskComment.taskId;
+        newTaskHistory.createdBy = user.id;
+        newTaskHistory.createdByName = user.username;
+        newTaskHistory.createdAt = new Date();
+        newTaskHistory.title = 'Add task comment';
+        newTaskHistory.description =
+          'User ' +
+          user.username +
+          ' add task comment at ' +
+          moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        await taskHistoryRepo.save(newTaskHistory);
+
+        return {
+          message: 'Task comment added successfully!',
+          data: {
+            newTaskComment: newTaskComment,
+            newHistory: newTaskHistory,
+          },
+        };
+      },
+    );
+  }
+  async removeTaskComment(taskCommentId: string, user: UserEntity) {
+    const taskFile: any = await this.taskCommentRepo.findOne({
+      where: {
+        id: taskCommentId,
+        isDeleted: false,
+      },
+      relations: {
+        task: true,
+      },
+    });
+
+    if (!taskFile) {
+      throw new Error('Task file not found!');
+    }
+    const task = taskFile.__task__;
+    return await this.taskRepository.manager.transaction(
+      async (transaction) => {
+        const taskCommentRepo = transaction.getRepository(TaskCommentEntity);
+        const taskHistoryRepo = transaction.getRepository(TaskHistoryEntity);
+        const taskRepo = transaction.getRepository(TaskEntity);
+
+        task.taskComment = task.taskComment - 1;
+
+        await taskRepo.save(task);
+        await taskCommentRepo.delete(taskCommentId);
+
+        // create history
+        const newTaskHistory = new TaskHistoryEntity();
+        newTaskHistory.taskId = taskCommentId;
+        newTaskHistory.createdBy = user.id;
+        newTaskHistory.createdByName = user.username;
+        newTaskHistory.createdAt = new Date();
+        newTaskHistory.title = 'Remove task comment';
+        newTaskHistory.description =
+          'User ' +
+          user.username +
+          ' remove task comment at ' +
+          moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        await taskHistoryRepo.save(newTaskHistory);
+
+        return {
+          message: 'Task comment removed successfully!',
+          newHistory: newTaskHistory,
+        };
+      },
+    );
+  }
+  // crud task file
+
+  async removeTaskFile(taskFileId: string, user: UserEntity) {
+    const taskFile: any = await this.taskFileRepo.findOne({
+      where: {
+        id: taskFileId,
+        isDeleted: false,
+      },
+      relations: {
+        task: true,
+      },
+    });
+
+    if (!taskFile) {
+      throw new Error('Task file not found!');
+    }
+    const task = taskFile.__task__;
+
+    return await this.taskRepository.manager.transaction(
+      async (transaction) => {
+        const taskFileRepo = transaction.getRepository(TaskFileEntity);
+        const taskHistoryRepo = transaction.getRepository(TaskHistoryEntity);
+        const taskRepo = transaction.getRepository(TaskEntity);
+        task.totalTaskFile = task.totalTaskFile - 1;
+
+        await taskRepo.save(task);
+
+        await taskFileRepo.delete(taskFileId);
+
+        // create history
+        const newTaskHistory = new TaskHistoryEntity();
+        newTaskHistory.taskId = taskFileId;
+        newTaskHistory.createdBy = user.id;
+        newTaskHistory.createdByName = user.username;
+        newTaskHistory.createdAt = new Date();
+        newTaskHistory.title = 'Remove task file';
+        newTaskHistory.description =
+          'User ' +
+          user.username +
+          ' remove task file at ' +
+          moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        await taskHistoryRepo.save(newTaskHistory);
+
+        return {
+          message: 'Task file removed successfully!',
+          newHistory: newTaskHistory,
+        };
+      },
+    );
+  }
+
+  async addTaskFile(taskFile: AddTaskFileDTO, user: UserEntity) {
+    const task = await this.taskRepository.findOneBy({
+      id: taskFile.taskId,
+      isDeleted: false,
+    });
+
+    if (!task) {
+      throw new Error('Task not found!');
+    }
+
+    return await this.taskRepository.manager.transaction(
+      async (transaction) => {
+        const taskFileRepo = transaction.getRepository(TaskFileEntity);
+        const taskHistoryRepo = transaction.getRepository(TaskHistoryEntity);
+        const taskRepo = transaction.getRepository(TaskEntity);
+
+        task.totalTaskFile = task.totalTaskFile + 1;
+        await taskRepo.save(task);
+
+        const newTaskFile = new TaskFileEntity();
+        newTaskFile.fileLink = taskFile.data.fileLink;
+        newTaskFile.taskId = task.id;
+        newTaskFile.createdBy = user.id;
+        newTaskFile.createdByName = user.username;
+        newTaskFile.createdAt = new Date();
+        newTaskFile.name = taskFile.data.name;
+        await taskFileRepo.save(newTaskFile);
+
+        // create history
+        const newTaskHistory = new TaskHistoryEntity();
+        newTaskHistory.taskId = task.id;
+        newTaskHistory.createdBy = user.id;
+        newTaskHistory.createdByName = user.username;
+        newTaskHistory.createdAt = new Date();
+        newTaskHistory.title = 'Add task file';
+        newTaskHistory.description =
+          'User ' +
+          user.username +
+          ' add task file at ' +
+          moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        await taskHistoryRepo.save(newTaskHistory);
+
+        return {
+          message: 'Task file added successfully!',
+          data: {
+            newTaskFile: newTaskFile,
+            newHistory: newTaskHistory,
+          },
+        };
+      },
+    );
+  }
+
+  // #endregion
+
+  //#region  update task
+  async update(updateTaskDto: UpdateTaskDTO, user: UserEntity) {
+    return await this.taskRepository.manager.transaction(
+      async (transaction) => {
+        const taskRepo = transaction.getRepository(TaskEntity);
+        const taskHistoryRepo = transaction.getRepository(TaskHistoryEntity);
+
+        const task: any = await taskRepo.findOne({
+          where: { id: updateTaskDto.id, isDeleted: false },
+          relations: {
+            lstPersonInCharge: true,
+          },
+        });
+        const lstPersonInCharge = task.__lstPersonInCharge__;
+        delete task.__lstPersonInCharge__;
+
+        if (!task) throw new Error('Task not found!');
+
+        // check user permission
+        const checkPermission = lstPersonInCharge.find(
+          (us: any) => us.id === user.id,
+        );
+        if (!checkPermission && task.createdBy !== user.id)
+          throw new Error('Permission denied!');
+
+        if (updateTaskDto.status) {
+          task.status = updateTaskDto.status;
+        }
+
+        // check if user is owner of task then can edit all field
+        const isCheckCanEditFiled =
+          updateTaskDto.title ||
+          updateTaskDto.description ||
+          updateTaskDto.expireDate ||
+          updateTaskDto.priority ||
+          updateTaskDto.type ||
+          updateTaskDto.members;
+
+        if (isCheckCanEditFiled && task.createdBy !== user.id) {
+          throw new Error(
+            'Permission denied! Just owner can edit these filled in task!',
+          );
+        }
+        if (updateTaskDto.title) task.title = updateTaskDto.title;
+        if (updateTaskDto.description)
+          task.description = updateTaskDto.description;
+        if (updateTaskDto.expireDate)
+          task.expireDate = updateTaskDto.expireDate;
+        if (updateTaskDto.priority) task.priority = updateTaskDto.priority;
+        if (updateTaskDto.type) task.type = updateTaskDto.type;
+        if (updateTaskDto.members) {
+          const lstPersonInCharge = await this.userRepository.find({
+            where: {
+              id: In([...updateTaskDto.members]),
+              isDeleted: false,
+            },
+          });
+          task.lstPersonInCharge = Promise.resolve(lstPersonInCharge);
+        }
+
+        task.updatedBy = user.id;
+        task.updatedAt = new Date();
+
+        // #region  add task history
+        const newTaskHistory = new TaskHistoryEntity();
+        newTaskHistory.taskId = task.id;
+        newTaskHistory.createdBy = user.id;
+        newTaskHistory.createdByName = user.username;
+        newTaskHistory.createdAt = new Date();
+        newTaskHistory.title = 'Update task';
+        newTaskHistory.description =
+          'User ' +
+          user.username +
+          ' update task at ' +
+          moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+
+        await taskHistoryRepo.save(newTaskHistory);
+        // #endregion
+        await taskRepo.update(task.id, task);
+
+        return {
+          message: 'Task updated successfully!',
+        };
+      },
+    );
+  }
+
+  //#endregion
+  //#region  find detail task
   async detail(id: string, teamId: string, user: UserEntity) {
     const task: any = await this.taskRepository.findOne({
       where: {
@@ -69,7 +539,8 @@ export class TaskService {
       (us: any) => us.id === user.id,
     );
 
-    if (!checkPermission) throw new Error('Permission denied!');
+    if (!checkPermission && task.createdBy !== user.id)
+      throw new Error('Permission denied!');
 
     const statusOfTask = coreHelper.getStatusOfTask(task.status);
     const priorityOfTask = coreHelper.getPriorityOfTask(task.priority);
@@ -97,11 +568,9 @@ export class TaskService {
       totalComment: task.__taskComments__?.length,
       totalSubTask: task.__subTasks__?.length,
       comments: task.__comments__.map((comment: any) => {
-        const owner = comment.__owner__;
-        delete comment.__owner__;
         return {
           ...comment,
-          owner,
+          owner: comment.owner,
         };
       }),
       subTask: task.__subTasks__,
@@ -125,6 +594,7 @@ export class TaskService {
 
     return res;
   }
+  //#endregion
   async pagination(taskPaginationDTO: TaskPaginationDTO) {
     const { status, teamId, columnId, userId, teamMemberId, search } =
       taskPaginationDTO;
@@ -158,26 +628,6 @@ export class TaskService {
     });
 
     const resultTask = tasks[0].map(async (task: any) => {
-      const [totalComment, totalTaskFile, totalSubTask] = await Promise.all([
-        this.taskCommentRepo.count({
-          where: {
-            isDeleted: false,
-            taskId: task.id,
-          },
-        }),
-        this.taskFileRepo.count({
-          where: {
-            isDeleted: false,
-            taskId: task.id,
-          },
-        }),
-        this.subTaskRepo.count({
-          where: {
-            isDeleted: false,
-            taskId: task.id,
-          },
-        }),
-      ]);
       const lstPersonInCharge = task.__lstPersonInCharge__;
       delete task.__lstPersonInCharge__;
       const statusOfTask = coreHelper.getStatusOfTask(task.status);
@@ -195,9 +645,6 @@ export class TaskService {
         typeName: typeOfTask?.name,
         typeColor: typeOfTask?.color,
         typeBackground: typeOfTask?.background,
-        totalComment,
-        totalTaskFile,
-        totalSubTask,
       };
     });
 
@@ -247,6 +694,9 @@ export class TaskService {
         newTask.cmdCheckOutBranch = `git checkout -b ${taskDTO.title}`;
         newTask.cmdCommit = `git commit -m "feature: ${taskDTO.title}"`;
         newTask.status = column.statusCode;
+        newTask.totalComment = taskDTO.comments.length;
+        newTask.totalSubTask = taskDTO.subTasks.length;
+        newTask.totalTaskFile = taskDTO.taskFile.length;
 
         await taskRepo.save(newTask);
         //#endregion
@@ -302,7 +752,7 @@ export class TaskService {
           'User ' +
           user.username +
           ' create new task at ' +
-          new Date().toString();
+          moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
         await taskHistoryRepo.save(newTaskHistory);
         //#endregion
 
@@ -314,8 +764,10 @@ export class TaskService {
           statusName: newTask.status,
           message:
             user.userDetail?.fullName ||
-            user.username + ' create new task at ' + new Date().toString(),
-          timeString: new Date().toString(),
+            user.username +
+              ' create new task at ' +
+              moment(new Date()).format('HH:mm:ss YYYY-MM-DD'),
+          timeString: moment(new Date()).format('HH:mm:ss YYYY-MM-DD'),
         };
         await this.discordService.taskLog(taskLog);
         //#endregion
@@ -499,38 +951,6 @@ export class TaskService {
 
     return {
       message: `${sourceTask.title} moved to ${statusNameTo}`,
-    };
-  }
-
-  async update(taskDTO: TaskDTO, taskId: string, user: UserEntity) {
-    const task = await this.taskRepository.findOne({
-      where: { id: taskId, isDeleted: false },
-    });
-    if (!task) {
-      throw new Error('Task not found!');
-    }
-    const column = await this.columnRepository.findOneBy({
-      id: taskDTO.columnId,
-    });
-    if (!column) {
-      throw new Error('Column not found!');
-    }
-    const lstPersonInCharge = await this.userRepository.find({
-      where: {
-        id: In([...taskDTO.lstPersonInCharge, user.id]),
-        isDeleted: false,
-      },
-    });
-    task.title = taskDTO.title;
-    task.description = taskDTO.description;
-    if (lstPersonInCharge.length > 0) {
-      task.lstPersonInCharge = Promise.resolve(lstPersonInCharge);
-    }
-    task.updatedBy = user.id;
-    await this.taskRepository.save(task);
-    return {
-      message: 'Task updated successfully',
-      data: task,
     };
   }
 
