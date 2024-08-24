@@ -171,7 +171,7 @@ export class TaskController {
     summary: 'delete task file ',
   })
   @ApiResponse({ status: 201 })
-  @Delete('delete-task-file:id')
+  @Delete('delete-task-file/:id')
   async deleteTaskFile(
     @Param('id') id: string,
     @CurrentUser() user: UserEntity,
