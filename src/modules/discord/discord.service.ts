@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import moment from 'moment';
+import * as moment from 'moment';
 import { BuildLogDTO, TaskLogDTO } from './dto';
 
 @Injectable()
