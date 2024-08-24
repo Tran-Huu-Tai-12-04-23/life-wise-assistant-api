@@ -67,7 +67,7 @@ export class TaskService {
       },
     });
 
-    const isHasNextPage = !(take * (skip / take) >= subTaskPagination[1]);
+    const isHasNextPage = !(take * (skip / take) < subTaskPagination[1]);
     return [...subTaskPagination, isHasNextPage];
   }
 
@@ -85,7 +85,7 @@ export class TaskService {
         createdAt: 'DESC',
       },
     });
-    const isHasNextPage = !(take * (skip / take) >= taskFileData[1]);
+    const isHasNextPage = !(take * (skip / take) < taskFileData[1]);
     return [...taskFileData, isHasNextPage];
   }
 
@@ -106,7 +106,7 @@ export class TaskService {
         owner: true,
       },
     });
-    const isHasNextPage = !(take * (skip / take) >= taskCommentData[1]);
+    const isHasNextPage = !(take * (skip / take) < taskCommentData[1]);
     return [...taskCommentData, isHasNextPage];
   }
 
@@ -123,8 +123,11 @@ export class TaskService {
       order: {
         createdAt: 'DESC',
       },
+      relations: {
+        owner: true,
+      },
     });
-    const isHasNextPage = !(take * (skip / take) >= taskHistoryData[1]);
+    const isHasNextPage = !(take * (skip / take) < taskHistoryData[1]);
     return [...taskHistoryData, isHasNextPage];
   }
   //#endregion
