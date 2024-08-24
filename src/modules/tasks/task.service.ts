@@ -11,6 +11,7 @@ import { TaskHistoryEntity } from 'src/entities/taskHistory.entity';
 import { coreHelper } from 'src/helpers';
 import {
   TaskCommentRepository,
+  TaskHistoryRepository,
   TaskRepository,
   UserRepository,
 } from 'src/repositories';
@@ -47,6 +48,7 @@ export class TaskService {
     private readonly taskCommentRepo: TaskCommentRepository,
     private readonly subTaskRepo: SubTaskRepository,
     private readonly taskFileRepo: TaskFileRepository,
+    private readonly taskHistoryRepo: TaskHistoryRepository,
   ) {}
 
   FRONT_END_LINK = this.configService.get<string>('FRONT_END_LINK');
@@ -113,7 +115,7 @@ export class TaskService {
   async taskHistoryPagination(data: PaginationDTO) {
     const { take, skip } = data;
     if (!data.where.taskId) throw new Error('Task id not found!');
-    const taskHistoryData = await this.taskCommentRepo.findAndCount({
+    const taskHistoryData = await this.taskHistoryRepo.findAndCount({
       where: {
         taskId: data.where.taskId,
         isDeleted: false,
@@ -168,6 +170,7 @@ export class TaskService {
           user.username +
           ' remove sub task at ' +
           moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        newTaskHistory.ownerId = user.id;
         await taskHistoryRepo.save(newTaskHistory);
       },
     );
@@ -211,6 +214,7 @@ export class TaskService {
           user.username +
           ' add sub task at ' +
           moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        newTaskHistory.ownerId = user.id;
         await taskHistoryRepo.save(newTaskHistory);
 
         return {
@@ -252,6 +256,7 @@ export class TaskService {
           user.username +
           ' toggle sub task at ' +
           moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        newTaskHistory.ownerId = user.id;
         await taskHistoryRepo.save(newTaskHistory);
 
         return {
@@ -297,6 +302,7 @@ export class TaskService {
           user.username +
           ' edit task comment at ' +
           moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        newTaskHistory.ownerId = user.id;
         await taskHistoryRepo.save(newTaskHistory);
       },
     );
@@ -340,6 +346,7 @@ export class TaskService {
           user.username +
           ' add task comment at ' +
           moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        newTaskHistory.ownerId = user.id;
         await taskHistoryRepo.save(newTaskHistory);
 
         return {
@@ -390,6 +397,7 @@ export class TaskService {
           user.username +
           ' remove task comment at ' +
           moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        newTaskHistory.ownerId = user.id;
         await taskHistoryRepo.save(newTaskHistory);
 
         return {
@@ -440,6 +448,7 @@ export class TaskService {
           user.username +
           ' remove task file at ' +
           moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        newTaskHistory.ownerId = user.id;
         await taskHistoryRepo.save(newTaskHistory);
 
         return {
@@ -490,6 +499,7 @@ export class TaskService {
           user.username +
           ' add task file at ' +
           moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        newTaskHistory.ownerId = user.id;
         await taskHistoryRepo.save(newTaskHistory);
 
         return {
@@ -580,6 +590,7 @@ export class TaskService {
           user.username +
           ' update task at ' +
           moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        newTaskHistory.ownerId = user.id;
 
         await taskHistoryRepo.save(newTaskHistory);
         // #endregion
@@ -805,6 +816,7 @@ export class TaskService {
           user.username +
           ' create new task at ' +
           moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        newTaskHistory.ownerId = user.id;
         await taskHistoryRepo.save(newTaskHistory);
         //#endregion
 

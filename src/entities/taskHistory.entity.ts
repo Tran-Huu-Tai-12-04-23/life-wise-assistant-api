@@ -1,6 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntityCustom } from './base.entity';
 import { TaskEntity } from './task.entity';
+import { UserEntity } from './user.entity';
 
 @Entity(`TaskHistory`)
 export class TaskHistoryEntity extends BaseEntityCustom {
@@ -15,4 +16,10 @@ export class TaskHistoryEntity extends BaseEntityCustom {
   @ManyToOne(() => TaskEntity, (task) => task.history)
   @JoinColumn({ name: 'taskId', referencedColumnName: 'id' })
   task: TaskEntity;
+
+  @Column()
+  ownerId: string;
+  @ManyToOne(() => UserEntity)
+  @JoinColumn({ name: 'ownerId', referencedColumnName: 'id' })
+  owner: UserEntity;
 }
