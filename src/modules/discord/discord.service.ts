@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import moment from 'moment';
 import { BuildLogDTO, TaskLogDTO } from './dto';
 
 @Injectable()
@@ -16,7 +17,9 @@ export class DiscordService {
     await axios.post(this.BUILD_LOG, {
       embeds: [
         {
-          title: 'Notification build log at ' + new Date().toLocaleString(),
+          title:
+            'Notification build log at ' +
+            moment(new Date()).format('DD/MM/YYYY HH:mm:ss'),
           fields: [
             { name: 'Project', value: buildLogDTO.project },
             { name: 'Source', value: buildLogDTO.source },
