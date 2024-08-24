@@ -18,6 +18,7 @@ import { UserEntity } from 'src/entities';
 import { CurrentUser } from 'src/helpers/decorators';
 import { UserDataDTO } from '../auth/dto';
 import { JwtAuthGuard } from '../auth/jwt.auth.guard';
+import { PaginationDTO } from '../dto';
 import {
   MoveTaskInAnotherColumnDTO,
   MoveTaskInTheSameColumnDTO,
@@ -39,6 +40,35 @@ import {
 @Controller('task')
 export class TaskController {
   constructor(private readonly service: TaskService) {}
+
+  // #region pagination for reference task
+  @ApiOperation({
+    summary: 'Get sub task pagination',
+  })
+  @ApiResponse({ status: 201 })
+  @Get('sub-task-pagination')
+  async subTaskPagination(@Body() data: PaginationDTO) {
+    return await this.service.subTaskPagination(data);
+  }
+
+  @ApiOperation({
+    summary: 'Get task file pagination',
+  })
+  @ApiResponse({ status: 201 })
+  @Get('task-file-pagination')
+  async taskFilePagination(@Body() data: PaginationDTO) {
+    return await this.service.taskFilePagination(data);
+  }
+
+  @ApiOperation({
+    summary: 'Get task comment pagination',
+  })
+  @ApiResponse({ status: 201 })
+  @Get('task-comment-pagination')
+  async taskCommentPagination(@Body() data: PaginationDTO) {
+    return await this.service.taskCommentPagination(data);
+  }
+  // #endregion
 
   //#region CRUD sub task
   @ApiOperation({

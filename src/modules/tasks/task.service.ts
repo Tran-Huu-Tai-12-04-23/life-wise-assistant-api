@@ -20,6 +20,7 @@ import { Between, In, Like, MoreThan } from 'typeorm';
 import { UserDataDTO } from '../auth/dto';
 import { DiscordService } from '../discord/discord.service';
 import { TaskLogDTO } from '../discord/dto';
+import { PaginationDTO } from '../dto';
 import { ColumnRepository } from './../../repositories/column.repository';
 import {
   ChangeStatusTaskDTO,
@@ -49,6 +50,62 @@ export class TaskService {
   ) {}
 
   FRONT_END_LINK = this.configService.get<string>('FRONT_END_LINK');
+
+  // #region pagination reference of task
+  async subTaskPagination(data: PaginationDTO) {
+    if (!data.where.taskId) throw new Error('Task id not found!');
+    const subTaskPagination = await this.subTaskRepo.find({
+      where: {
+        taskId: data.where.taskId,
+        isDeleted: false,
+      },
+      take: data.take,
+      skip: data.skip,
+    });
+
+    return subTaskPagination;
+  }
+
+  async taskFilePagination(data: PaginationDTO) {
+    if (!data.where.taskId) throw new Error('Column id not found!');
+    const taskFileData = await this.taskFileRepo.find({
+      where: {
+        taskId: data.where.taskId,
+        isDeleted: false,
+      },
+      take: data.take,
+      skip: data.skip,
+    });
+
+    return taskFileData;
+  }
+
+  async taskCommentPagination(data: PaginationDTO) {
+    if (!data.where.taskId) throw new Error('Column id not found!');
+    const taskCommentData = await this.taskCommentRepo.find({
+      where: {
+        taskId: data.where.taskId,
+        isDeleted: false,
+      },
+      take: data.take,
+      skip: data.skip,
+    });
+    return taskCommentData;
+  }
+
+  async taskHistoryPagination(data: PaginationDTO) {
+    if (!data.where.taskId) throw new Error('Task id not found!');
+    const taskHistoryData = await this.taskCommentRepo.find({
+      where: {
+        taskId: data.where.taskId,
+        isDeleted: false,
+      },
+      take: data.take,
+      skip: data.skip,
+    });
+    return taskHistoryData;
+  }
+  //#endregion
 
   // #region  update reference task task file comment sub task
   // crud sub task
