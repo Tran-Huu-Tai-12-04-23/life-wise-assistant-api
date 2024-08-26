@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { NOTIFICATION_TYPE } from 'src/constants/enum-data';
 import { NotificationEntity, UserEntity } from 'src/entities';
-import { NotificationRepository } from 'src/repositories';
+import { NotificationRepository, UserRepository } from 'src/repositories';
 import { PaginationDTO } from '../dto';
 import {
   NotificationTeamInviteToCreateDTO,
@@ -10,7 +10,10 @@ import {
 
 @Injectable()
 export class NotificationService {
-  constructor(private notificationRepo: NotificationRepository) {}
+  constructor(
+    private notificationRepo: NotificationRepository,
+    private readonly userRepo: UserRepository,
+  ) {}
 
   async notificationPagination(data: PaginationDTO, user: UserEntity) {
     const result = await this.notificationRepo.findAndCount({
@@ -20,22 +23,27 @@ export class NotificationService {
       skip: data.skip,
     });
 
-    const dataResult = result[0].map((item) => {
-      const notificationType = NOTIFICATION_TYPE[item.type as 'ASSIGN_TASK'];
-      const isInviteNotification =
-        item.type === NOTIFICATION_TYPE.INVITE_TEAM.code;
-      return {
-        ...item,
-        notificationTypeName: notificationType?.name,
-        notificationTypeColor: notificationType?.color,
-        notificationTypeBackground: notificationType?.background,
-        notificationType,
-        isInviteNotification,
-      };
-    });
+    const dataResult = await Promise.all(
+      result[0].map(async (item) => {
+        const notificationType = NOTIFICATION_TYPE[item.type as 'ASSIGN_TASK'];
+        const isInviteNotification =
+          item.type === NOTIFICATION_TYPE.INVITE_TEAM.code;
+        const owner = await this.userRepo.findOne({
+          where: { id: item.createdBy, isActive: true, isDeleted: false },
+        });
+        return {
+          ...item,
+          notificationTypeName: notificationType?.name,
+          notificationTypeColor: notificationType?.color,
+          notificationTypeBackground: notificationType?.background,
+          notificationType,
+          isInviteNotification,
+          owner,
+        };
+      }),
+    );
 
-    const isHasNextPage = result[1] > data.skip + data.take;
-
+    const isHasNextPage = !(data.take * (data.skip / data.take) < result[1]);
     return [dataResult, result[1], isHasNextPage];
   }
 
