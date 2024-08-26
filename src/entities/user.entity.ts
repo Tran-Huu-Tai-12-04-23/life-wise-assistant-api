@@ -17,6 +17,7 @@ import { MessageEntity } from './message.entity';
 import { NotificationEntity } from './notification.entity';
 import { TaskEntity } from './task.entity';
 import { TeamEntity } from './team.entity';
+import { TeamPermissionEntity } from './teamPermission.entity';
 import { UserDetailEntity } from './userDetail.entity';
 @Entity(`Users`)
 export class UserEntity extends BaseEntityCustom {
@@ -73,4 +74,10 @@ export class UserEntity extends BaseEntityCustom {
   @OneToMany(() => GroupChatEntity, (gr) => gr.owner)
   @JoinTable()
   lstGroupChatIsOwner: Promise<GroupChatEntity[]>;
+
+  @OneToMany(
+    () => TeamPermissionEntity,
+    (teamPermission) => teamPermission.user,
+  )
+  teamPermissions: Promise<TeamPermissionEntity[]>;
 }

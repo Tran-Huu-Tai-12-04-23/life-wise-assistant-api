@@ -10,6 +10,7 @@ import {
 } from 'src/repositories';
 import { SubTaskRepository } from 'src/repositories/subTask.repository';
 import { TaskFileRepository } from 'src/repositories/taskFile.repository';
+import { TeamPermissionRepository } from 'src/repositories/teamPermission.repository';
 import { TypeOrmExModule } from 'src/typeorm/typeorm-ex.module';
 import { DiscordService } from '../discord/discord.service';
 import { TaskController } from './task.controller';
@@ -26,6 +27,7 @@ import { TaskService } from './task.service';
       TaskCommentRepository,
       TaskFileRepository,
       HistoryRepository,
+      TeamPermissionRepository,
     ]),
   ],
   providers: [TaskService, ConfigService, DiscordService],

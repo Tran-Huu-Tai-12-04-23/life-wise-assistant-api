@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import {
   ColumnRepository,
+  NotificationRepository,
   TaskCommentRepository,
   TaskRepository,
 } from 'src/repositories';
@@ -12,6 +13,7 @@ import { TeamRepository } from 'src/repositories/team.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { TypeOrmExModule } from 'src/typeorm/typeorm-ex.module';
 import { ColumnService } from '../columns/column.service';
+import { NotificationService } from '../notification/notification.service';
 import { TeamController } from './team.controller';
 import { TeamsService } from './team.service';
 
@@ -25,9 +27,16 @@ import { TeamsService } from './team.service';
       TaskCommentRepository,
       SubTaskRepository,
       TaskFileRepository,
+      NotificationRepository,
     ]),
   ],
-  providers: [TeamsService, ColumnService, JwtService, ConfigService],
+  providers: [
+    TeamsService,
+    ColumnService,
+    JwtService,
+    ConfigService,
+    NotificationService,
+  ],
   controllers: [TeamController],
   exports: [TeamsService],
 })

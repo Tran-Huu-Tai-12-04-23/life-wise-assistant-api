@@ -7,6 +7,17 @@ import {
   IsString,
 } from 'class-validator';
 
+export class TeamInviteDTO {
+  @ApiProperty({ description: 'Team ID' })
+  @IsNotEmpty()
+  @IsString()
+  teamId: string;
+
+  @ApiProperty({ description: 'Lst User ID' })
+  @IsNotEmpty()
+  @IsArray()
+  lstUserId: string[];
+}
 export class TeamDTO {
   @ApiProperty({ description: 'Team name' })
   @IsNotEmpty()
@@ -32,9 +43,8 @@ export class TeamDTO {
   @IsBoolean()
   isWorkPlace: boolean;
   @ApiProperty({ description: 'List of user IDs' })
-  @IsNotEmpty()
+  @IsOptional()
   @IsArray()
-  @IsString({ each: true })
   members: string[];
 }
 export class RemoveUserTeamDTO {

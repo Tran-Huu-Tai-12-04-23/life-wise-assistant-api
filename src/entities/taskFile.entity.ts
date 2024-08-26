@@ -13,5 +13,5 @@ export class TaskFileEntity extends BaseEntityCustom {
   taskId: string;
   @ManyToOne(() => TaskEntity, (task) => task.taskFiles)
   @JoinColumn({ name: 'taskId', referencedColumnName: 'id' })
-  task: TaskEntity;
+  task: Promise<TaskEntity>;
 }

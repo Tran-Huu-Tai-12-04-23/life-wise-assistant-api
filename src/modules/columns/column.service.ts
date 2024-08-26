@@ -169,7 +169,7 @@ export class ColumnService {
     return await this.columnRepository.remove(column);
   }
 
-  async getAll(getAllColumnDTO: GetAllColumnsDTO) {
+  async getAll(getAllColumnDTO: GetAllColumnsDTO, user: UserEntity) {
     const team = await this.teamRepository.findOneBy({
       id: getAllColumnDTO.teamId,
     });
@@ -186,6 +186,9 @@ export class ColumnService {
     const columns: any = await this.columnRepository.find({
       where,
       order: { index: 'ASC' },
+      relations: {
+        team: true,
+      },
     });
 
     const whereForTask: any = {};
@@ -203,6 +206,11 @@ export class ColumnService {
 
     const res = await Promise.all(
       columns.map(async (col: any) => {
+        if (col.__team__.createdBy !== user.id) {
+          whereForTask.lstPersonInCharge = {
+            id: user.id,
+          };
+        }
         const tasks = await this.taskRepository.find({
           where: { ...whereForTask, isDeleted: false, column: { id: col.id } },
           relations: { lstPersonInCharge: true },
@@ -213,33 +221,14 @@ export class ColumnService {
         const background =
           enumData.taskStatus[col.statusCode as 'PENDING']?.background ||
           'rgba(0,0,0,0.1)';
+        const isOwner = col.createdBy === user.id;
         return {
           ...col,
+          isOwner,
           color,
           background,
           tasks: await Promise.all(
             tasks.map(async (tas: any) => {
-              const [totalComment, totalTaskFile, totalSubTask] =
-                await Promise.all([
-                  this.taskCommentRepo.count({
-                    where: {
-                      isDeleted: false,
-                      taskId: tas.id,
-                    },
-                  }),
-                  this.taskFileRepo.count({
-                    where: {
-                      isDeleted: false,
-                      taskId: tas.id,
-                    },
-                  }),
-                  this.subTaskRepo.count({
-                    where: {
-                      isDeleted: false,
-                      taskId: tas.id,
-                    },
-                  }),
-                ]);
               const lstMember = tas.__lstPersonInCharge__;
               delete tas.__lstPersonInCharge__;
               const statusOfTask = coreHelper.getStatusOfTask(tas.status);
@@ -257,9 +246,7 @@ export class ColumnService {
                 typeName: typeOfTask?.name,
                 typeColor: typeOfTask?.color,
                 typeBackground: typeOfTask?.background,
-                totalComment,
-                totalTaskFile,
-                totalSubTask,
+                isOwner: tas.createdBy === user.id,
               };
             }),
           ),

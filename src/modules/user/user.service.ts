@@ -59,7 +59,7 @@ export class UserService {
     //#region  update history
 
     const history = new HistoryEntity();
-    history.type = HISTORY_TYPE.USER_ACTION;
+    history.type = HISTORY_TYPE.USER_ACTION.code;
     history.content = 'Update user detail';
     history.createdBy = user.id;
     history.createdByName = user.username;

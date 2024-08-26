@@ -1,58 +1,51 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsString,
-  IsNotEmpty,
-  IsArray,
-  IsOptional,
-  IsBoolean,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-export class TeamDTO {
-  @ApiProperty({ description: 'Team name' })
+export class NotificationToCreateDTO {
+  @ApiProperty({ description: 'notify title' })
   @IsNotEmpty()
   @IsString()
-  name: string;
+  title: string;
 
-  @ApiProperty({ description: 'Thumbnails of team' })
+  @ApiProperty({ description: 'notify sub title' })
   @IsNotEmpty()
   @IsString()
-  thumbnails: string;
+  subTitle: string;
 
-  @ApiProperty({ description: 'Description of team' })
-  @IsNotEmpty()
+  @ApiProperty({ description: 'description of notify' })
+  @IsOptional()
   @IsString()
   description: string;
 
-  @ApiProperty({ description: 'Tags of team' })
-  @IsOptional()
+  @ApiProperty({ description: 'type of notify' })
+  @IsNotEmpty()
   @IsString()
-  tags: string;
+  type: string;
 
-  @ApiProperty({ description: 'Is work place' })
-  @IsOptional()
-  @IsBoolean()
-  isWorkPlace: boolean;
-  @ApiProperty({ description: 'List of user IDs' })
-  @IsNotEmpty()
-  @IsArray()
-  @IsString({ each: true })
-  members: string[];
-}
-export class RemoveUserTeamDTO {
-  @ApiProperty({ description: 'Team ID' })
+  @ApiProperty({ description: 'linkTarget of notify' })
   @IsNotEmpty()
   @IsString()
-  id: string;
-  @ApiProperty({ description: 'User ID' })
+  linkTarget: string;
+
+  @ApiProperty({ description: 'user ID' })
   @IsNotEmpty()
   @IsString()
   userId: string;
+
+  @ApiProperty({ description: 'username to create' })
+  @IsNotEmpty()
+  @IsString()
+  createdByName: string;
+
+  @ApiProperty({ description: 'user ID to create' })
+  @IsNotEmpty()
+  @IsString()
+  createdBy: string;
 }
 
-export class InviteLstMemberDTO {
-  @ApiProperty({ description: 'List of user IDs' })
+export class NotificationTeamInviteToCreateDTO extends NotificationToCreateDTO {
+  @ApiProperty({ description: 'team invited id' })
   @IsNotEmpty()
-  @IsArray()
-  @IsString({ each: true })
-  lstMembers: string[];
+  @IsString()
+  teamInviteId: string;
 }

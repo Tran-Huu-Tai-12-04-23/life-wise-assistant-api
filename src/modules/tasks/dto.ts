@@ -129,18 +129,10 @@ export class MoveTaskInTheSameColumnDTO {
 }
 
 export class MoveTaskInAnotherColumnDTO {
-  @ApiProperty({ description: 'Task current index' })
-  @IsNotEmpty()
-  @IsNumber()
-  taskCurrentIndex: number;
-  @ApiProperty({ description: 'Task new index' })
-  @IsNotEmpty()
-  @IsNumber()
-  taskNewIndex: number;
-  @ApiProperty({ description: 'Column from id' })
+  @ApiProperty({ description: 'Task id' })
   @IsNotEmpty()
   @IsString()
-  columnIdFrom: string;
+  taskId: string;
 
   @ApiProperty({ description: 'Column from id' })
   @IsNotEmpty()

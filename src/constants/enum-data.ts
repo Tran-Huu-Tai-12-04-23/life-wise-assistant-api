@@ -177,5 +177,50 @@ export enum EChatType {
 }
 
 export const HISTORY_TYPE = {
-  USER_ACTION: 'USER_ACTION',
+  USER_ACTION: {
+    code: 'USER_ACTION',
+    name: 'User action',
+    color: 'rgba(12, 133, 9, 1)',
+    background: 'rgba(12, 133, 9, 0.2)',
+  },
+  TEAM_INVITE: {
+    code: 'TEAM_INVITE',
+    name: 'Team invite',
+    color: 'rgba(66, 133, 244, 1)',
+    background: 'rgba(66, 133, 244, 0.2)',
+  },
+  ACCEPT_TO_TEAM: {
+    code: 'ACCEPT_TO_TEAM',
+    name: 'Accept to team',
+    color: 'rgba(255, 193, 7, 01)',
+    background: 'rgba(255, 193, 7, 0.2)',
+  },
+  REJECT_TO_TEAM: {
+    code: 'REJECT_TO_TEAM',
+    name: 'Reject to team',
+    color: 'rgba(255, 61, 61, 01)',
+    background: 'rgba(255, 61, 61, 0.2)',
+  },
+};
+
+export const NOTIFICATION_TYPE = {
+  ASSIGN_TASK: {
+    name: 'Assign task',
+    code: 'ASSIGN_TASK',
+    color: 'rgba(12, 133, 9, 1)',
+    background: 'rgba(12, 133, 9, 0.2)',
+  },
+  CREATE_TASK: {
+    name: 'Create task',
+    code: 'CREATE_TASK',
+    color: 'rgba(66, 133, 244, 1)',
+    background: 'rgba(66, 133, 244, 0.2)',
+  },
+
+  INVITE_TEAM: {
+    name: 'Invite team',
+    code: 'INVITE_TEAM',
+    color: 'rgba(255, 193, 7, 01)',
+    background: 'rgba(255, 193, 7, 0.2)',
+  },
 };

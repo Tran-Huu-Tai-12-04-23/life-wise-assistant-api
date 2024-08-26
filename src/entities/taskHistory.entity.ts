@@ -15,7 +15,7 @@ export class TaskHistoryEntity extends BaseEntityCustom {
   taskId: string;
   @ManyToOne(() => TaskEntity, (task) => task.history)
   @JoinColumn({ name: 'taskId', referencedColumnName: 'id' })
-  task: TaskEntity;
+  task: Promise<TaskEntity>;
 
   @Column()
   ownerId: string;

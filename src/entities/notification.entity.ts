@@ -9,6 +9,10 @@ export class NotificationEntity extends BaseEntityCustom {
   @IsString()
   title: string;
 
+  @Column()
+  @IsString()
+  subTitle: string;
+
   @Column({ length: 10000 })
   @IsString()
   description: string;
@@ -21,7 +25,19 @@ export class NotificationEntity extends BaseEntityCustom {
   @IsString()
   isRead: boolean;
 
+  @Column()
+  @IsString()
+  linkTarget: string;
+
+  @Column()
+  @IsString()
+  userId: string;
+
   @OneToMany(() => UserEntity, (user) => user.notifications)
-  @JoinColumn()
+  @JoinColumn({ name: 'userId', referencedColumnName: 'id' })
   user: Promise<UserEntity>;
+
+  @Column({ nullable: true })
+  @IsString()
+  teamInviteId: string;
 }

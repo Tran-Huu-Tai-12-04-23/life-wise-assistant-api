@@ -12,11 +12,11 @@ export class TaskCommentEntity extends BaseEntityCustom {
   userId: string;
   @ManyToOne(() => UserEntity)
   @JoinColumn({ name: 'userId', referencedColumnName: 'id' })
-  owner: UserEntity;
+  owner: Promise<UserEntity>;
 
   @Column()
   taskId: string;
   @ManyToOne(() => TaskEntity, (task) => task.comments)
   @JoinColumn({ name: 'taskId', referencedColumnName: 'id' })
-  task: TaskEntity;
+  task: Promise<TaskEntity>;
 }

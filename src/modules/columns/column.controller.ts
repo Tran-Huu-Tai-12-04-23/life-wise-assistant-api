@@ -46,8 +46,11 @@ export class ColumnController {
   })
   @ApiResponse({ status: 201 })
   @Post('team')
-  async getAllOfTeam(@Body() getAllColumnDTO: GetAllColumnsDTO) {
-    return await this.service.getAll(getAllColumnDTO);
+  async getAllOfTeam(
+    @Body() getAllColumnDTO: GetAllColumnsDTO,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return await this.service.getAll(getAllColumnDTO, user);
   }
   @ApiOperation({
     summary: 'Create new column',

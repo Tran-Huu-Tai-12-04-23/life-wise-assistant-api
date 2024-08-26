@@ -11,7 +11,7 @@ export class SubTaskEntity extends BaseEntityCustom {
   taskId: string;
   @ManyToOne(() => TaskEntity, (task) => task.subTasks)
   @JoinColumn({ name: 'taskId', referencedColumnName: 'id' })
-  task: TaskEntity;
+  task: Promise<TaskEntity>;
 
   @Column()
   isChecked: boolean;

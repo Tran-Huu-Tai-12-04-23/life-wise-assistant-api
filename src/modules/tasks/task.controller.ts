@@ -65,8 +65,11 @@ export class TaskController {
   })
   @ApiResponse({ status: 201 })
   @Post('task-comment-pagination')
-  async taskCommentPagination(@Body() data: PaginationDTO) {
-    return await this.service.taskCommentPagination(data);
+  async taskCommentPagination(
+    @Body() data: PaginationDTO,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return await this.service.taskCommentPagination(data, user);
   }
 
   @ApiOperation({
@@ -198,13 +201,9 @@ export class TaskController {
     summary: 'task detail',
   })
   @ApiResponse({ status: 201 })
-  @Get('/:id/:teamId')
-  async detail(
-    @Param('id') id: string,
-    @Param('teamId') teamId: string,
-    @CurrentUser() user: UserEntity,
-  ) {
-    return await this.service.detail(id, teamId, user);
+  @Get('/:id')
+  async detail(@Param('id') id: string, @CurrentUser() user: UserEntity) {
+    return await this.service.detail(id, user);
   }
 
   @ApiResponse({ status: 201 })

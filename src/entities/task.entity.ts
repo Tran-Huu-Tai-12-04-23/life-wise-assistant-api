@@ -38,11 +38,17 @@ export class TaskEntity extends BaseEntityCustom {
   cmdCommit: string;
   @Column({ default: '' })
   sourceCodeLink: string;
+
+  @Column()
+  code: string;
   @Column()
   index: number;
   @ManyToMany(() => UserEntity, (user) => user)
   @JoinTable()
   lstPersonInCharge: Promise<UserEntity[]>;
+
+  @Column()
+  columnId: string;
   @ManyToOne(() => ColumnEntity, (column) => column.tasks)
   @JoinColumn({ name: 'columnId', referencedColumnName: 'id' })
   column: Promise<ColumnEntity>;

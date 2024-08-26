@@ -8,7 +8,7 @@ import { MailService } from './mail.service';
       transport: {
         host: String(process.env.MAIL_HOST),
         port: Number(process.env.MAIL_PORT),
-        secure: false,
+        // secure: false,
         auth: {
           user: process.env.MAIL_USERNAME,
           pass: process.env.MAIL_PASSWORD,

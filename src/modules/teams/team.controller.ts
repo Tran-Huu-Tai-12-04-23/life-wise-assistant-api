@@ -19,7 +19,12 @@ import { TeamEntity } from 'src/entities/team.entity';
 import { CurrentUser } from 'src/helpers/decorators';
 import { JwtAuthGuard } from '../auth/jwt.auth.guard';
 import { PaginationDTO } from '../dto';
-import { InviteLstMemberDTO, RemoveUserTeamDTO, TeamDTO } from './dto';
+import {
+  InviteLstMemberDTO,
+  RemoveUserTeamDTO,
+  TeamDTO,
+  TeamInviteDTO,
+} from './dto';
 import { TeamsService } from './team.service';
 
 @UseGuards(JwtAuthGuard)
@@ -28,6 +33,42 @@ import { TeamsService } from './team.service';
 @Controller('team')
 export class TeamController {
   constructor(private readonly service: TeamsService) {}
+
+  @ApiOperation({
+    summary: 'Invited multi user',
+  })
+  @ApiResponse({ status: 201, type: TeamEntity })
+  @Post('invite-member-to-team')
+  async inviteMemberToTeam(
+    @Body() data: TeamInviteDTO,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return await this.service.inviteMemberToTeam(data, user);
+  }
+
+  @ApiOperation({
+    summary: 'Accept to team',
+  })
+  @ApiResponse({ status: 201, type: TeamEntity })
+  @Put('accept-invite/:teamInviteId')
+  async acceptInviteTeam(
+    @Param('teamInviteId') teamInviteId: string,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return await this.service.acceptInviteTeam(teamInviteId, user);
+  }
+
+  @ApiOperation({
+    summary: 'Reject to team',
+  })
+  @ApiResponse({ status: 201, type: TeamEntity })
+  @Put('accept-invite/:teamInviteId')
+  async rejectInviteTeam(
+    @Param('teamInviteId') teamInviteId: string,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return await this.service.rejectInviteTeam(teamInviteId, user);
+  }
 
   @ApiOperation({
     summary: 'Generate invite link',
