@@ -6,27 +6,27 @@ import { UserEntity } from './user.entity';
 
 @Entity(`TeamPermissions`)
 export class TeamPermissionEntity extends BaseEntityCustom {
-  @Column()
+  @Column({ default: false })
   @IsBoolean()
   isAdmin: boolean;
 
-  @Column()
+  @Column({ default: false })
   @IsBoolean()
   isEdit: boolean;
 
-  @Column()
+  @Column({ default: false })
   @IsBoolean()
   isDelete: boolean;
 
-  @Column()
+  @Column({ default: false })
   @IsBoolean()
   isCreate: boolean;
 
-  @Column()
+  @Column({ default: false })
   @IsBoolean()
   isAssign: boolean;
 
-  @Column()
+  @Column({ default: false })
   @IsBoolean()
   isInvite: boolean;
 

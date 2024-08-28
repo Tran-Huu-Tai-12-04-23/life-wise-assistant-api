@@ -62,7 +62,7 @@ export class TeamController {
     summary: 'Reject to team',
   })
   @ApiResponse({ status: 201, type: TeamEntity })
-  @Put('accept-invite/:teamInviteId')
+  @Put('reject-invite/:teamInviteId')
   async rejectInviteTeam(
     @Param('teamInviteId') teamInviteId: string,
     @CurrentUser() user: UserEntity,

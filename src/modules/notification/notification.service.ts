@@ -43,8 +43,17 @@ export class NotificationService {
       }),
     );
 
-    const isHasNextPage = !(data.take * (data.skip / data.take) < result[1]);
-    return [dataResult, result[1], isHasNextPage];
+    const totalNotificationUnread = await this.notificationRepo.count({
+      where: { userId: user.id, isRead: false },
+    });
+
+    const isHasNextPage = result[1] < data.take;
+    return [
+      dataResult,
+      result[1],
+      !isHasNextPage,
+      totalNotificationUnread || 0,
+    ];
   }
 
   async createData(

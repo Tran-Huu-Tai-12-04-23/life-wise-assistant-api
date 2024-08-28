@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import moment from 'moment';
+import * as moment from 'moment';
 import {
   HISTORY_TYPE,
   NOTIFICATION_TYPE,
@@ -104,6 +104,9 @@ export class TeamsService {
         const teamInvited = new TeamInviteEntity();
         teamInvited.teamId = data.teamId;
         teamInvited.userId = userData.id;
+        teamInvited.createdBy = user.id;
+        teamInvited.createdAt = new Date();
+        teamInvited.createdByName = user.username;
 
         await teamInviteRepo.save(teamInvited);
 
@@ -165,6 +168,17 @@ export class TeamsService {
         );
       }
 
+      const notificationOfTeamInvite = await notificationRepo.find({
+        where: {
+          teamInviteId: teamInviteId,
+          isDeleted: false,
+          isRead: false,
+        },
+      });
+
+      for (const notification of notificationOfTeamInvite) {
+        await notificationRepo.save({ ...notification, isRead: true });
+      }
       const team = await this.repo.findOneBy({
         id: teamInvite.teamId,
         isDeleted: false,
@@ -211,7 +225,7 @@ export class TeamsService {
         description: `[${user.username}] Accepted invite to team [${team.name}] at ${moment(new Date()).format('YYYY-MM-DD HH:mm:ss')}`,
         type: 'team_invite_accept',
         linkTarget: `team/${team.id}`,
-        userId: teamInvite.createdBy,
+        userId: teamInvite.createdBy || user.id,
         createdByName: user.username,
         createdBy: teamInvite.createdBy,
       };
@@ -221,7 +235,10 @@ export class TeamsService {
         notificationRepo,
       );
 
-      return { message: 'Accept invite successfully!' };
+      return {
+        message: 'Accept invite successfully!',
+        lstNotificationRead: notificationOfTeamInvite.map((item) => item.id),
+      };
     });
   }
 
@@ -245,6 +262,18 @@ export class TeamsService {
         throw new Error(
           'You don`t have invite from ' + user.username + ' to join team!',
         );
+      }
+
+      const notificationOfTeamInvite = await notificationRepo.find({
+        where: {
+          teamInviteId: teamInviteId,
+          isDeleted: false,
+          isRead: false,
+        },
+      });
+
+      for (const notification of notificationOfTeamInvite) {
+        await notificationRepo.save({ ...notification, isRead: true });
       }
 
       await teamInvited.save({ ...teamInvite, isDeleted: true });
@@ -275,6 +304,11 @@ export class TeamsService {
         notificationDTO,
         notificationRepo,
       );
+
+      return {
+        message: 'Reject invite successfully!',
+        lstNotificationRead: notificationOfTeamInvite.map((item) => item.id),
+      };
     });
   }
 
