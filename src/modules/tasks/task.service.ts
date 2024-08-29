@@ -815,7 +815,15 @@ export class TaskService {
     }
 
     const tasks: any = await this.taskRepository.findAndCount({
-      where: { ...whereCon, isDeleted: false },
+      where: [
+        { ...whereCon, isDeleted: false, userId: user.id },
+        { ...whereCon, isDeleted: false, createdBy: user.id },
+        {
+          ...whereCon,
+          isDeleted: false,
+          column: { team: { createdBy: user.id } },
+        },
+      ],
       order: { index: 'ASC' },
       relations: {
         lstPersonInCharge: true,
