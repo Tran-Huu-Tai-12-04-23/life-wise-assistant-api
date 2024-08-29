@@ -208,8 +208,11 @@ export class TaskController {
 
   @ApiResponse({ status: 201 })
   @Post('/pagination')
-  async pagination(@Body() taskPaginationDTO: TaskPaginationDTO) {
-    return await this.service.pagination(taskPaginationDTO);
+  async pagination(
+    @Body() taskPaginationDTO: PaginationDTO<TaskPaginationDTO>,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return await this.service.pagination(taskPaginationDTO, user);
   }
 
   @ApiOperation({

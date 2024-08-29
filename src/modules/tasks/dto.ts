@@ -7,7 +7,6 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { PaginationDTO } from '../dto';
 
 export class TaskDTO {
   @ApiProperty({ description: 'Task title' })
@@ -140,7 +139,7 @@ export class MoveTaskInAnotherColumnDTO {
   columnIdTo: string;
 }
 
-export class TaskPaginationDTO extends PaginationDTO {
+export class TaskPaginationDTO {
   @ApiProperty({ description: 'Task status' })
   @IsOptional()
   @IsString()

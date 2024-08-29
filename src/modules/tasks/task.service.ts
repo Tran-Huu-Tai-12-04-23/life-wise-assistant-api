@@ -17,6 +17,7 @@ import {
 } from 'src/repositories';
 import { SubTaskRepository } from 'src/repositories/subTask.repository';
 import { TaskFileRepository } from 'src/repositories/taskFile.repository';
+import { TeamRepository } from 'src/repositories/team.repository';
 import { TeamPermissionRepository } from 'src/repositories/teamPermission.repository';
 import { Between, In, Like } from 'typeorm';
 import { UserDataDTO } from '../auth/dto';
@@ -51,6 +52,7 @@ export class TaskService {
     private readonly taskFileRepo: TaskFileRepository,
     private readonly taskHistoryRepo: TaskHistoryRepository,
     private readonly teamPermissionRepo: TeamPermissionRepository,
+    private readonly teamRepo: TeamRepository,
   ) {}
 
   FRONT_END_LINK = this.configService.get<string>('FRONT_END_LINK');
@@ -785,9 +787,12 @@ export class TaskService {
     return res;
   }
   //#endregion
-  async pagination(taskPaginationDTO: TaskPaginationDTO) {
+  async pagination(
+    taskPaginationDTO: PaginationDTO<TaskPaginationDTO>,
+    user: UserEntity,
+  ) {
     const { status, teamId, columnId, userId, teamMemberId, search } =
-      taskPaginationDTO;
+      taskPaginationDTO.where;
 
     const whereCon: any = {};
     if (status) {
@@ -812,7 +817,9 @@ export class TaskService {
     const tasks: any = await this.taskRepository.findAndCount({
       where: { ...whereCon, isDeleted: false },
       order: { index: 'ASC' },
-      relations: { lstPersonInCharge: true },
+      relations: {
+        lstPersonInCharge: true,
+      },
       skip: taskPaginationDTO.skip,
       take: taskPaginationDTO.take,
     });
@@ -823,6 +830,8 @@ export class TaskService {
       const statusOfTask = coreHelper.getStatusOfTask(task.status);
       const priorityOfTask = coreHelper.getPriorityOfTask(task.priority);
       const typeOfTask = coreHelper.getTypeOfTask(task.type);
+      const isOwner = task.createdBy === user.id;
+
       return {
         lstPersonInCharge,
         ...task,
@@ -835,6 +844,7 @@ export class TaskService {
         typeName: typeOfTask?.name,
         typeColor: typeOfTask?.color,
         typeBackground: typeOfTask?.background,
+        isOwner,
       };
     });
 

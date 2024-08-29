@@ -7,6 +7,7 @@ import { ChatModule } from './modules/chat/chat.module';
 import { ColumnModule } from './modules/columns/column.module';
 import { CommonModule } from './modules/common/common.module';
 import { MailModule } from './modules/mail/mail.module';
+import { MobileModule } from './modules/mobile/mobile.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { TaskModule } from './modules/tasks/task.module';
 import { TeamModule } from './modules/teams/team.module';
@@ -26,6 +27,7 @@ import { SocketModule } from './socket/socket.module';
     CommonModule,
     MailModule,
     NotificationModule,
+    MobileModule,
   ],
   controllers: [AppController],
   providers: [AppService],
