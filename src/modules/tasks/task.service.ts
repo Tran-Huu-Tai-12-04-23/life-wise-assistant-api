@@ -816,7 +816,13 @@ export class TaskService {
 
     const tasks: any = await this.taskRepository.findAndCount({
       where: [
-        { ...whereCon, isDeleted: false, userId: user.id },
+        {
+          ...whereCon,
+          isDeleted: false,
+          lstPersonInCharge: {
+            id: In([user.id]),
+          },
+        },
         { ...whereCon, isDeleted: false, createdBy: user.id },
         {
           ...whereCon,
@@ -832,29 +838,31 @@ export class TaskService {
       take: taskPaginationDTO.take,
     });
 
-    const resultTask = tasks[0].map(async (task: any) => {
-      const lstPersonInCharge = task.__lstPersonInCharge__;
-      delete task.__lstPersonInCharge__;
-      const statusOfTask = coreHelper.getStatusOfTask(task.status);
-      const priorityOfTask = coreHelper.getPriorityOfTask(task.priority);
-      const typeOfTask = coreHelper.getTypeOfTask(task.type);
-      const isOwner = task.createdBy === user.id;
+    const resultTask = await Promise.all(
+      tasks[0].map(async (task: any) => {
+        const lstPersonInCharge = task.__lstPersonInCharge__;
+        delete task.__lstPersonInCharge__;
+        const statusOfTask = coreHelper.getStatusOfTask(task.status);
+        const priorityOfTask = coreHelper.getPriorityOfTask(task.priority);
+        const typeOfTask = coreHelper.getTypeOfTask(task.type);
+        const isOwner = task.createdBy === user.id;
 
-      return {
-        lstPersonInCharge,
-        ...task,
-        statusName: statusOfTask?.name,
-        statusColor: statusOfTask?.color,
-        statusBackground: statusOfTask?.background,
-        priorityName: priorityOfTask?.name,
-        priorityColor: priorityOfTask?.color,
-        priorityBackground: priorityOfTask?.background,
-        typeName: typeOfTask?.name,
-        typeColor: typeOfTask?.color,
-        typeBackground: typeOfTask?.background,
-        isOwner,
-      };
-    });
+        return {
+          members: lstPersonInCharge,
+          ...task,
+          statusName: statusOfTask?.name,
+          statusColor: statusOfTask?.color,
+          statusBackground: statusOfTask?.background,
+          priorityName: priorityOfTask?.name,
+          priorityColor: priorityOfTask?.color,
+          priorityBackground: priorityOfTask?.background,
+          typeName: typeOfTask?.name,
+          typeColor: typeOfTask?.color,
+          typeBackground: typeOfTask?.background,
+          isOwner,
+        };
+      }),
+    );
 
     return [resultTask, tasks[1]];
   }
