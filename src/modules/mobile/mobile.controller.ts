@@ -24,7 +24,7 @@ export class MobileController {
     summary: 'Task pagination',
   })
   @ApiResponse({ status: 200, type: TaskEntity })
-  @Post()
+  @Post('/task/pagination')
   async taskPagination(
     @CurrentUser() user: UserEntity,
     @Body() data: PaginationDTO<TaskPaginationDTO>,
