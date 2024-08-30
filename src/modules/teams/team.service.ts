@@ -223,7 +223,8 @@ export class TeamsService {
         title: user.username + ' accepted your invite!',
         subTitle: '',
         description: `[${user.username}] Accepted invite to team [${team.name}] at ${moment(new Date()).format('YYYY-MM-DD HH:mm:ss')}`,
-        type: 'team_invite_accept',
+
+        type: NOTIFICATION_TYPE.ACCEPT_INVITE_TEAM.code,
         linkTarget: `team/${team.id}`,
         userId: teamInvite.createdBy || user.id,
         createdByName: user.username,
@@ -293,7 +294,7 @@ export class TeamsService {
         title: user.username + ' rejected your invite!',
         subTitle: '',
         description: `[${user.username}] Rejected invite to team [${teamInvite.__team__.name}] at ${moment(new Date()).format('YYYY-MM-DD HH:mm:ss')}`,
-        type: 'team_invite_reject',
+        type: NOTIFICATION_TYPE.REJECT_INVITE_TEAM.code,
         linkTarget: `team/${teamInvite.teamId}`,
         userId: teamInvite.createdBy,
         createdByName: user.username,

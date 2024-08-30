@@ -98,7 +98,7 @@ export class TaskService {
   async taskCommentPagination(data: PaginationDTO, user: UserEntity) {
     const { take, skip } = data;
     if (!data.where.taskId) throw new Error('Column id not found!');
-    const taskCommentData = await this.taskCommentRepo.findAndCount({
+    const taskCommentData: any = await this.taskCommentRepo.findAndCount({
       where: {
         taskId: data.where.taskId,
         isDeleted: false,
@@ -112,11 +112,15 @@ export class TaskService {
         owner: true,
       },
     });
-    const res = taskCommentData[0].map((comment) => {
+
+    const res = taskCommentData[0].map((comment: any) => {
+      const owner = comment.__owner__;
       const isOwner = comment.createdBy === user.id;
+      delete comment.__owner__;
       return {
         ...comment,
         isOwner,
+        owner,
       };
     });
     const isHasNextPage = !(take * (skip / take) < taskCommentData[1]);
@@ -141,7 +145,16 @@ export class TaskService {
       },
     });
     const isHasNextPage = !(take * (skip / take) < taskHistoryData[1]);
-    return [...taskHistoryData, isHasNextPage];
+
+    const result = taskHistoryData[0].map((history: any) => {
+      const owner = history.__owner__;
+      delete history.__owner__;
+      return {
+        ...history,
+        owner,
+      };
+    });
+    return [result, taskHistoryData[1], isHasNextPage];
   }
   //#endregion
   // #region  update reference task task file comment sub task
@@ -164,7 +177,7 @@ export class TaskService {
           throw new Error('Sub task not found!');
         }
 
-        const task = subTask.task;
+        const task = subTask.__task__;
         task.totalSubTask = task.totalSubTask - 1;
         await taskRepo.save(task);
         await subTaskRepo.delete(subTaskId);
@@ -272,7 +285,7 @@ export class TaskService {
           throw new Error('Sub task not found!');
         }
 
-        const task = subTask.task;
+        const task = subTask.__task__;
 
         subTask.isChecked = !subTask.isChecked;
         await subTaskRepo.save(subTask);
@@ -434,7 +447,7 @@ export class TaskService {
     if (!taskComment) {
       throw new Error('Task file not found!');
     }
-    const task = taskComment.task;
+    const task = taskComment.__task__;
     return await this.taskRepository.manager.transaction(
       async (transaction) => {
         const taskCommentRepo = transaction.getRepository(TaskCommentEntity);
@@ -490,7 +503,7 @@ export class TaskService {
     if (!taskFile) {
       throw new Error('Task file not found!');
     }
-    const task = taskFile.task;
+    const task = taskFile.__task__;
 
     return await this.taskRepository.manager.transaction(
       async (transaction) => {

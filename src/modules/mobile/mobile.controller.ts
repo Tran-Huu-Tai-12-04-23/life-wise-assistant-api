@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -30,6 +30,19 @@ export class MobileController {
     @Body() data: PaginationDTO<TaskPaginationDTO>,
   ) {
     return await this.service.taskPagination(user, data);
+    // Implement the method logic here
+  }
+
+  @ApiOperation({
+    summary: 'Task pagination',
+  })
+  @ApiResponse({ status: 200, type: TaskEntity })
+  @Post('/task/detail/:taskId')
+  async taskDetail(
+    @CurrentUser() user: UserEntity,
+    @Param('taskId') taskId: string,
+  ) {
+    return await this.service.taskDetail(user, taskId);
     // Implement the method logic here
   }
   //#endregion  task action

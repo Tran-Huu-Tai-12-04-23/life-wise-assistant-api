@@ -14,4 +14,8 @@ export class MobileService {
   ) {
     return await this.taskService.pagination(data, user);
   }
+
+  async taskDetail(user: UserEntity, taskId: string) {
+    return await this.taskService.detail(taskId, user);
+  }
 }

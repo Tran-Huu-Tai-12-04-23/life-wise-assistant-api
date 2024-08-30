@@ -216,11 +216,22 @@ export const NOTIFICATION_TYPE = {
     color: 'rgba(66, 133, 244, 1)',
     background: 'rgba(66, 133, 244, 0.2)',
   },
-
   INVITE_TEAM: {
     name: 'Invite team',
     code: 'INVITE_TEAM',
     color: 'rgba(255, 193, 7, 01)',
     background: 'rgba(255, 193, 7, 0.2)',
+  },
+  REJECT_INVITE_TEAM: {
+    name: 'Reject team',
+    code: 'REJECT_INVITE_TEAM',
+    color: 'rgba(255, 61, 61, 01)',
+    background: 'rgba(255, 61, 61, 0.2)',
+  },
+  ACCEPT_INVITE_TEAM: {
+    name: 'Accept team',
+    code: 'ACCEPT_INVITE_TEAM',
+    color: 'rgba(12, 133, 9, 1)',
+    background: 'rgba(12, 133, 9, 0.2)',
   },
 };
