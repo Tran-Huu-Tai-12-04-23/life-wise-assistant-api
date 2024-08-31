@@ -238,7 +238,7 @@ export class TeamsService {
 
       return {
         message: 'Accept invite successfully!',
-        lstNotificationRead: notificationOfTeamInvite.map((item) => item.id),
+        lstNotificationIdRead: notificationOfTeamInvite.map((item) => item.id),
       };
     });
   }
@@ -308,7 +308,7 @@ export class TeamsService {
 
       return {
         message: 'Reject invite successfully!',
-        lstNotificationRead: notificationOfTeamInvite.map((item) => item.id),
+        lstNotificationIdRead: notificationOfTeamInvite.map((item) => item.id),
       };
     });
   }

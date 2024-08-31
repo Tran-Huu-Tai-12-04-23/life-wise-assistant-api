@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Param, Post, Put, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -28,5 +28,14 @@ export class NotificationController {
     @CurrentUser() user: UserEntity,
   ) {
     return await this.service.notificationPagination(data, user);
+  }
+
+  @ApiOperation({
+    summary: 'mask as read notification',
+  })
+  @ApiResponse({ status: 201 })
+  @Put('/mask-as-read/:id')
+  async maskAsRead(@Param('id') id: string, @CurrentUser() user: UserEntity) {
+    return await this.service.maskAsRead(id, user);
   }
 }

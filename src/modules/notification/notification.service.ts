@@ -93,4 +93,15 @@ export class NotificationService {
     notify.teamInviteId = data.teamInviteId;
     return repo ? repo.save(data) : await this.notificationRepo.save(data);
   }
+
+  async maskAsRead(id: string, user: UserEntity) {
+    await this.notificationRepo.update(
+      { id, userId: user.id },
+      { isRead: true, updatedAt: new Date(), updatedBy: user.id },
+    );
+
+    return {
+      id,
+    };
+  }
 }

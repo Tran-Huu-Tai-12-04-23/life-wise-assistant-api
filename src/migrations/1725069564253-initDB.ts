@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class MigrationName1724515079830 implements MigrationInterface {
-  name = 'MigrationName1724515079830';
+export class MigrationName1725069564253 implements MigrationInterface {
+  name = 'MigrationName1725069564253';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
@@ -11,7 +11,10 @@ export class MigrationName1724515079830 implements MigrationInterface {
       `CREATE TABLE \`GroupChats\` (\`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`createdBy\` varchar(36) NULL, \`createdByName\` varchar(50) NULL, \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`updatedBy\` varchar(36) NULL, \`deleteBy\` varchar(36) NULL, \`isDeleted\` tinyint NOT NULL DEFAULT 0, \`type\` varchar(255) NOT NULL, \`name\` varchar(255) NOT NULL, \`status\` tinyint NOT NULL DEFAULT 0, \`ownerId\` varchar(36) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`,
     );
     await queryRunner.query(
-      `CREATE TABLE \`Notifications\` (\`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`createdBy\` varchar(36) NULL, \`createdByName\` varchar(50) NULL, \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`updatedBy\` varchar(36) NULL, \`deleteBy\` varchar(36) NULL, \`isDeleted\` tinyint NOT NULL DEFAULT 0, \`title\` varchar(255) NOT NULL, \`description\` varchar(10000) NOT NULL, \`type\` varchar(255) NOT NULL, \`isRead\` tinyint NOT NULL DEFAULT 0, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`,
+      `CREATE TABLE \`Notifications\` (\`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`createdBy\` varchar(36) NULL, \`createdByName\` varchar(50) NULL, \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`updatedBy\` varchar(36) NULL, \`deleteBy\` varchar(36) NULL, \`isDeleted\` tinyint NOT NULL DEFAULT 0, \`title\` varchar(255) NOT NULL, \`subTitle\` varchar(255) NOT NULL, \`description\` varchar(10000) NOT NULL, \`type\` varchar(255) NOT NULL, \`isRead\` tinyint NOT NULL DEFAULT 0, \`linkTarget\` varchar(255) NOT NULL, \`userId\` varchar(255) NOT NULL, \`teamInviteId\` varchar(255) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE \`TeamPermissions\` (\`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`createdBy\` varchar(36) NULL, \`createdByName\` varchar(50) NULL, \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`updatedBy\` varchar(36) NULL, \`deleteBy\` varchar(36) NULL, \`isDeleted\` tinyint NOT NULL DEFAULT 0, \`isAdmin\` tinyint NOT NULL DEFAULT 0, \`isEdit\` tinyint NOT NULL DEFAULT 0, \`isDelete\` tinyint NOT NULL DEFAULT 0, \`isCreate\` tinyint NOT NULL DEFAULT 0, \`isAssign\` tinyint NOT NULL DEFAULT 0, \`isInvite\` tinyint NOT NULL DEFAULT 0, \`userId\` varchar(255) NOT NULL, \`teamId\` varchar(255) NOT NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`,
     );
     await queryRunner.query(
       `CREATE TABLE \`Teams\` (\`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`createdBy\` varchar(36) NULL, \`createdByName\` varchar(50) NULL, \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`updatedBy\` varchar(36) NULL, \`deleteBy\` varchar(36) NULL, \`isDeleted\` tinyint NOT NULL DEFAULT 0, \`name\` varchar(255) NOT NULL, \`thumbnails\` varchar(255) NOT NULL, \`description\` varchar(500) NOT NULL, \`tags\` varchar(255) NOT NULL, \`isWorkPlace\` tinyint NOT NULL, \`inviteToken\` varchar(255) NULL, \`inviteTokenExpiredDate\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`,
@@ -41,6 +44,9 @@ export class MigrationName1724515079830 implements MigrationInterface {
       `CREATE TABLE \`UserDetails\` (\`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`createdBy\` varchar(36) NULL, \`createdByName\` varchar(50) NULL, \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`updatedBy\` varchar(36) NULL, \`deleteBy\` varchar(36) NULL, \`isDeleted\` tinyint NOT NULL DEFAULT 0, \`fullName\` varchar(500) NOT NULL, \`address\` varchar(500) NOT NULL, \`phoneNumber\` varchar(500) NOT NULL, \`email\` varchar(500) NOT NULL, \`githubLink\` varchar(500) NOT NULL, \`telegramLink\` varchar(500) NOT NULL, \`facebookLink\` varchar(500) NOT NULL, \`bio\` varchar(500) NOT NULL, \`userId\` varchar(36) NULL, UNIQUE INDEX \`REL_e60e37fdce8f5e2b289b621433\` (\`userId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`,
     );
     await queryRunner.query(
+      `CREATE TABLE \`TeamInvites\` (\`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`createdBy\` varchar(36) NULL, \`createdByName\` varchar(50) NULL, \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`updatedBy\` varchar(36) NULL, \`deleteBy\` varchar(36) NULL, \`isDeleted\` tinyint NOT NULL DEFAULT 0, \`userId\` varchar(255) NOT NULL, \`teamId\` varchar(255) NOT NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`,
+    );
+    await queryRunner.query(
       `CREATE TABLE \`History\` (\`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`createdBy\` varchar(36) NULL, \`createdByName\` varchar(50) NULL, \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`updatedBy\` varchar(36) NULL, \`deleteBy\` varchar(36) NULL, \`isDeleted\` tinyint NOT NULL DEFAULT 0, \`type\` varchar(255) NOT NULL, \`content\` varchar(255) NOT NULL, \`targetActionId\` varchar(255) NOT NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`,
     );
     await queryRunner.query(
@@ -60,6 +66,12 @@ export class MigrationName1724515079830 implements MigrationInterface {
     );
     await queryRunner.query(
       `ALTER TABLE \`GroupChats\` ADD CONSTRAINT \`FK_dff62ff87204092b62397f135b8\` FOREIGN KEY (\`ownerId\`) REFERENCES \`Users\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE \`TeamPermissions\` ADD CONSTRAINT \`FK_3f73caeb4f96499fb68669edd17\` FOREIGN KEY (\`userId\`) REFERENCES \`Users\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE \`TeamPermissions\` ADD CONSTRAINT \`FK_c05f7dea0843785c91f95162347\` FOREIGN KEY (\`teamId\`) REFERENCES \`Teams\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE \`Columns\` ADD CONSTRAINT \`FK_9c700ed4dadba75da1ef003caef\` FOREIGN KEY (\`teamId\`) REFERENCES \`Teams\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`,
@@ -90,6 +102,12 @@ export class MigrationName1724515079830 implements MigrationInterface {
     );
     await queryRunner.query(
       `ALTER TABLE \`UserDetails\` ADD CONSTRAINT \`FK_e60e37fdce8f5e2b289b621433f\` FOREIGN KEY (\`userId\`) REFERENCES \`Users\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE \`TeamInvites\` ADD CONSTRAINT \`FK_1a22b7dccec7315728a5473d289\` FOREIGN KEY (\`userId\`) REFERENCES \`Users\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE \`TeamInvites\` ADD CONSTRAINT \`FK_8c09028924aeab47ba24532e5fd\` FOREIGN KEY (\`teamId\`) REFERENCES \`Teams\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE \`group_chats_lst_member_users\` ADD CONSTRAINT \`FK_dbc50c72ec9266ae6915dec3ef4\` FOREIGN KEY (\`groupChatsId\`) REFERENCES \`GroupChats\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`,
@@ -131,6 +149,12 @@ export class MigrationName1724515079830 implements MigrationInterface {
       `ALTER TABLE \`group_chats_lst_member_users\` DROP FOREIGN KEY \`FK_dbc50c72ec9266ae6915dec3ef4\``,
     );
     await queryRunner.query(
+      `ALTER TABLE \`TeamInvites\` DROP FOREIGN KEY \`FK_8c09028924aeab47ba24532e5fd\``,
+    );
+    await queryRunner.query(
+      `ALTER TABLE \`TeamInvites\` DROP FOREIGN KEY \`FK_1a22b7dccec7315728a5473d289\``,
+    );
+    await queryRunner.query(
       `ALTER TABLE \`UserDetails\` DROP FOREIGN KEY \`FK_e60e37fdce8f5e2b289b621433f\``,
     );
     await queryRunner.query(
@@ -159,6 +183,12 @@ export class MigrationName1724515079830 implements MigrationInterface {
     );
     await queryRunner.query(
       `ALTER TABLE \`Columns\` DROP FOREIGN KEY \`FK_9c700ed4dadba75da1ef003caef\``,
+    );
+    await queryRunner.query(
+      `ALTER TABLE \`TeamPermissions\` DROP FOREIGN KEY \`FK_c05f7dea0843785c91f95162347\``,
+    );
+    await queryRunner.query(
+      `ALTER TABLE \`TeamPermissions\` DROP FOREIGN KEY \`FK_3f73caeb4f96499fb68669edd17\``,
     );
     await queryRunner.query(
       `ALTER TABLE \`GroupChats\` DROP FOREIGN KEY \`FK_dff62ff87204092b62397f135b8\``,
@@ -191,6 +221,7 @@ export class MigrationName1724515079830 implements MigrationInterface {
     );
     await queryRunner.query(`DROP TABLE \`group_chats_lst_member_users\``);
     await queryRunner.query(`DROP TABLE \`History\``);
+    await queryRunner.query(`DROP TABLE \`TeamInvites\``);
     await queryRunner.query(
       `DROP INDEX \`REL_e60e37fdce8f5e2b289b621433\` ON \`UserDetails\``,
     );
@@ -203,6 +234,7 @@ export class MigrationName1724515079830 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE \`SubTasks\``);
     await queryRunner.query(`DROP TABLE \`Columns\``);
     await queryRunner.query(`DROP TABLE \`Teams\``);
+    await queryRunner.query(`DROP TABLE \`TeamPermissions\``);
     await queryRunner.query(`DROP TABLE \`Notifications\``);
     await queryRunner.query(`DROP TABLE \`GroupChats\``);
     await queryRunner.query(`DROP TABLE \`Messages\``);
