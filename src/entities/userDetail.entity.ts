@@ -1,6 +1,6 @@
-import { Entity, Column, JoinColumn, OneToOne } from 'typeorm';
-import { UserEntity } from './user.entity';
+import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 import { BaseEntityCustom } from './base.entity';
+import { UserEntity } from './user.entity';
 
 @Entity(`UserDetails`)
 export class UserDetailEntity extends BaseEntityCustom {
@@ -20,6 +20,9 @@ export class UserDetailEntity extends BaseEntityCustom {
   facebookLink: string;
   @Column({ length: 500 })
   bio: string;
+
+  @Column({ type: 'uuid' })
+  userId: string;
   @OneToOne(() => UserEntity, (p) => p.userDetail)
   @JoinColumn({ name: 'userId', referencedColumnName: 'id' })
   user: Promise<UserEntity>;

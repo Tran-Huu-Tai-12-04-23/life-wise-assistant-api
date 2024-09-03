@@ -1,23 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as moment from 'moment';
-import {
-  HISTORY_TYPE,
-  NOTIFICATION_TYPE,
-  enumData,
-} from 'src/constants/enum-data';
-import {
-  ColumnEntity,
-  HistoryEntity,
-  NotificationEntity,
-  UserEntity,
-} from 'src/entities';
+import { NOTIFICATION_TYPE, enumData } from 'src/constants/enum-data';
+import { ColumnEntity, NotificationEntity, UserEntity } from 'src/entities';
 import { TeamEntity } from 'src/entities/team.entity';
+import { TeamHistoryEntity } from 'src/entities/teamHistory.entity';
 import { TeamInviteEntity } from 'src/entities/teamInvited.entity';
 import { TeamPermissionEntity } from 'src/entities/teamPermission.entity';
 import { UserRepository } from 'src/repositories';
 import { TeamRepository } from 'src/repositories/team.repository';
+import { TeamPermissionRepository } from 'src/repositories/teamPermission.repository';
 import { In, Like } from 'typeorm';
 import { ColumnService } from '../columns/column.service';
 import { ColumnDTO } from '../columns/dto';
@@ -32,6 +25,7 @@ import {
   RemoveUserTeamDTO,
   TeamDTO,
   TeamInviteDTO,
+  TeamPermissionUpdateDTO,
 } from './dto';
 
 @Injectable()
@@ -45,18 +39,181 @@ export class TeamsService {
     private configService: ConfigService,
     private jwtService: JwtService,
     private notificationService: NotificationService,
+    private teamPermissionRepo: TeamPermissionRepository,
   ) {
     this.inviteLink = this.configService.get('INVITE_LINK') || '';
     this.JWT_SECRET = this.configService.get<string>('JWT_SECRET') || '';
   }
 
+  async updateTeamPermission(data: TeamPermissionUpdateDTO, user: UserEntity) {
+    return await this.repo.manager.transaction(async (transaction) => {
+      const teamPermissionRepo =
+        transaction.getRepository(TeamPermissionEntity);
+      const teamHistoryRepo = transaction.getRepository(TeamHistoryEntity);
+
+      const historyString = [];
+      const teamPermission: any = await teamPermissionRepo.findOne({
+        where: {
+          id: data.id,
+        },
+        relations: {
+          user: true,
+        },
+      });
+
+      if (!teamPermission) {
+        throw new NotFoundException('Team permission not found!');
+      }
+
+      const updateData: any = {};
+      if (data.isCreate) {
+        updateData.isCreate = data.isCreate;
+        if (teamPermission.isCreate !== data.isCreate) {
+          historyString.push(
+            `create: from ${teamPermission.isCreate ? 'allow' : 'not allow'} =>  ${data.isCreate ? 'allow' : 'not allow'}`,
+          );
+        }
+      }
+      if (data.isEdit) {
+        updateData.isEdit = data.isEdit;
+        if (teamPermission.isEdit !== data.isEdit) {
+          historyString.push(
+            `edit: from ${teamPermission.isEdit ? 'allow' : 'not allow'} =>  ${data.isEdit ? 'allow' : 'not allow'}`,
+          );
+        }
+      }
+      if (data.isDelete) {
+        updateData.isDelete = data.isDelete;
+        if (teamPermission.isDelete !== data.isDelete) {
+          historyString.push(
+            `delete: from ${teamPermission.isDelete ? 'allow' : 'not allow'} =>  ${data.isDelete ? 'allow' : 'not allow'}`,
+          );
+        }
+      }
+      if (data.isAssign) {
+        updateData.isAssign = data.isAssign;
+        if (teamPermission.isAssign !== data.isAssign) {
+          historyString.push(
+            `assign: from ${teamPermission.isAssign ? 'allow' : 'not allow'} =>  ${data.isAssign ? 'allow' : 'not allow'}`,
+          );
+        }
+      }
+      if (data.isAdmin) {
+        updateData.isAdmin = data.isAdmin;
+        if (teamPermission.isAdmin !== data.isAdmin) {
+          historyString.push(
+            `role: from ${teamPermission.isAdmin ? 'admin' : 'member'} =>  ${data.isAdmin ? 'admin' : 'member'}`,
+          );
+        }
+      }
+      if (data.isInvite) {
+        updateData.isInvite = data.isInvite;
+        if (teamPermission.isInvite !== data.isInvite) {
+          historyString.push(
+            `invite: from ${teamPermission.isInvite ? 'allow' : 'not allow'} =>  ${data.isInvite ? 'allow' : 'not allow'}`,
+          );
+        }
+      }
+      updateData.updatedAt = new Date();
+      updateData.updatedBy = user.id;
+
+      const userOfPermission = teamPermission.__user__;
+      delete teamPermission.__user__;
+
+      await teamPermissionRepo.update(teamPermission.id, updateData);
+
+      // create history
+
+      const history = new TeamHistoryEntity();
+      history.title = 'Update team permission';
+      history.description = `Update team permission of user [${userOfPermission.username}] with ${historyString.join(', ')}`;
+      history.teamId = teamPermission.teamId;
+      history.ownerId = user.id;
+      history.createdAt = new Date();
+      history.createdBy = user.id;
+      history.createdByName = user.username;
+      await teamHistoryRepo.save(history);
+
+      return {
+        message: 'Update team permission successfully!',
+      };
+    });
+  }
+
+  async loadUserTeamPermission(
+    teamId: string,
+    userId: string,
+    user: UserEntity,
+  ) {
+    const teamPermission = await this.teamPermissionRepo.findOne({
+      where: { userId: userId, teamId: teamId, isDelete: false },
+    });
+    if (!teamPermission) {
+      const teamPermissionEntity = new TeamPermissionEntity();
+      teamPermissionEntity.isAdmin = false;
+      teamPermissionEntity.isEdit = false;
+      teamPermissionEntity.isDelete = false;
+      teamPermissionEntity.isCreate = false;
+      teamPermissionEntity.isAssign = false;
+      teamPermissionEntity.isInvite = false;
+      teamPermissionEntity.userId = userId;
+      teamPermissionEntity.teamId = teamId;
+      teamPermissionEntity.createdAt = new Date();
+      teamPermissionEntity.createdBy = user.id;
+      teamPermissionEntity.createdByName = user.username;
+      await this.teamPermissionRepo.save(teamPermissionEntity);
+
+      return teamPermissionEntity;
+    }
+
+    return teamPermission;
+  }
+
+  async paginationForTeamHistory(
+    data: PaginationDTO,
+    teamId: string,
+    user: UserEntity,
+  ) {
+    return await this.repo.manager.transaction(async (transaction) => {
+      const historyRepo = transaction.getRepository(TeamHistoryEntity);
+      const teamPermissionRepo =
+        transaction.getRepository(TeamPermissionEntity);
+
+      const teamPermission = await teamPermissionRepo.findOneBy({
+        userId: user.id,
+        teamId: teamId,
+      });
+
+      if (!teamPermission) {
+        throw new Error(
+          'You do not have permission to view this team history!',
+        );
+      }
+
+      const result = await historyRepo.findAndCount({
+        where: {
+          teamId: teamId,
+        },
+        order: { createdAt: 'DESC' },
+        skip: data.skip,
+        take: data.take || 10,
+        relations: {
+          owner: true,
+        },
+      });
+
+      const isHasNextPage = data.skip + data.take < result[1];
+
+      return [result[0], result[1], isHasNextPage];
+    });
+  }
   async inviteMemberToTeam(data: TeamInviteDTO, user: UserEntity) {
     return await this.repo.manager.transaction(async (transaction) => {
       const teamRepo = transaction.getRepository(TeamEntity);
       const teamPermissionRepo =
         transaction.getRepository(TeamPermissionEntity);
       const teamInviteRepo = transaction.getRepository(TeamInviteEntity);
-      const historyRepo = transaction.getRepository(HistoryEntity);
+      const historyRepo = transaction.getRepository(TeamHistoryEntity);
       const userRepo = transaction.getRepository(UserEntity);
       const notificationRepo = transaction.getRepository(NotificationEntity);
 
@@ -132,13 +289,17 @@ export class TeamsService {
 
       const lstUserNameString = users.map((u) => u.username).join(', ');
 
-      const history = new HistoryEntity();
-      history.type = HISTORY_TYPE.TEAM_INVITE.code;
-      history.targetActionId = data.teamId;
+      /// create history
+      const history = new TeamHistoryEntity();
+      history.title = 'Accepted invite to team';
+      history.description = `Invite user [${lstUserNameString}] to [${team.name}]`;
+      history.teamId = data.teamId;
+      history.ownerId = user.id;
+      history.createdAt = new Date();
       history.createdBy = user.id;
       history.createdByName = user.username;
-      history.createdAt = new Date();
-      history.content = `Invite user [${lstUserNameString}] to [${team.name}]`;
+      history.createdBy = user.id;
+      history.createdByName = user.username;
       await historyRepo.save(history);
 
       return { message: 'Invite user to team successfully!' };
@@ -149,7 +310,7 @@ export class TeamsService {
     return await this.repo.manager.transaction(async (transaction) => {
       const teamInvited = transaction.getRepository(TeamInviteEntity);
       const teamRepo = transaction.getRepository(TeamEntity);
-      const historyRepo = transaction.getRepository(HistoryEntity);
+      const historyRepo = transaction.getRepository(TeamHistoryEntity);
       const notificationRepo = transaction.getRepository(NotificationEntity);
       const teamPermissionRepo =
         transaction.getRepository(TeamPermissionEntity);
@@ -209,13 +370,16 @@ export class TeamsService {
       await teamPermissionRepo.save(teamPermission);
 
       /// create history
-      const history = new HistoryEntity();
-      history.type = HISTORY_TYPE.ACCEPT_TO_TEAM.code;
-      history.targetActionId = teamInvite.teamId;
+      const history = new TeamHistoryEntity();
+      history.title = 'Accepted invite to team';
+      history.description = `[${user.username}] accepted invite to team [${team.name}]`;
+      history.teamId = teamInvite.teamId;
+      history.ownerId = user.id;
+      history.createdAt = new Date();
       history.createdBy = user.id;
       history.createdByName = user.username;
-      history.createdAt = new Date();
-      history.content = `[${user.username}] accepted invite to team [${team.name}]`;
+      history.createdBy = user.id;
+      history.createdByName = user.username;
       await historyRepo.save(history);
 
       // create notification for user who invited
@@ -246,7 +410,7 @@ export class TeamsService {
   async rejectInviteTeam(teamInviteId: string, user: UserEntity) {
     return await this.repo.manager.transaction(async (transaction) => {
       const teamInvited = transaction.getRepository(TeamInviteEntity);
-      const historyRepo = transaction.getRepository(HistoryEntity);
+      const historyRepo = transaction.getRepository(TeamHistoryEntity);
       const notificationRepo = transaction.getRepository(NotificationEntity);
 
       const teamInvite: any = await teamInvited.findOne({
@@ -280,13 +444,16 @@ export class TeamsService {
       await teamInvited.save({ ...teamInvite, isDeleted: true });
 
       // create history
-      const history = new HistoryEntity();
-      history.type = HISTORY_TYPE.REJECT_TO_TEAM.code;
-      history.targetActionId = teamInvite.teamId;
+      const history = new TeamHistoryEntity();
+      history.title = 'Reject invite to team';
+      history.description = `[${user.username}] rejected invite to team [${teamInvite.__team__.name}]`;
+      history.teamId = teamInvite.teamId;
+      history.ownerId = user.id;
+      history.createdAt = new Date();
       history.createdBy = user.id;
       history.createdByName = user.username;
-      history.content = `[${user.username}] rejected invite to team [${teamInvite.__team__.name}]`;
-      history.createdAt = new Date();
+      history.createdBy = user.id;
+      history.createdByName = user.username;
       await historyRepo.save(history);
 
       // create notification for user who invited
@@ -377,6 +544,7 @@ export class TeamsService {
       const columRepo = transaction.getRepository(ColumnEntity);
       const teamRepo = transaction.getRepository(TeamEntity);
       const userRepo = transaction.getRepository(UserEntity);
+      const teamHistoryRepo = transaction.getRepository(TeamHistoryEntity);
       const teamPermissionRepo =
         transaction.getRepository(TeamPermissionEntity);
 
@@ -418,6 +586,16 @@ export class TeamsService {
         (key) => enumData.taskStatus[key as keyof typeof enumData.taskStatus],
       );
 
+      // new history
+      const history = new TeamHistoryEntity();
+      history.title = 'Create new team';
+      history.description = `Create new team [${res.name}]`;
+      history.teamId = res.id;
+      history.ownerId = user.id;
+      history.createdAt = new Date();
+      history.createdBy = user.id;
+      history.createdByName = user.username;
+      await teamHistoryRepo.save(history);
       // create team permission
       for (const member of lstMember) {
         const teamPermission = new TeamPermissionEntity();

@@ -1,9 +1,12 @@
-import { Body, Controller, Get } from '@nestjs/common';
+import { Body, Controller, Get, Put, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { UserEntity } from 'src/entities';
 import { CurrentUser } from 'src/helpers/decorators';
+import { JwtAuthGuard } from '../auth/jwt.auth.guard';
 import { UpdateUserDTO } from './dto';
 import { UserService } from './user.service';
-
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 @Controller('user')
 export class UserController {
   constructor(private readonly service: UserService) {}
@@ -13,7 +16,7 @@ export class UserController {
     return await this.service.getProfile(user);
   }
 
-  @Get('update-detail')
+  @Put('profile')
   public async update(
     @CurrentUser() user: UserEntity,
     @Body() body: UpdateUserDTO,

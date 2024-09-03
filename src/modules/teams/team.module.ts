@@ -10,6 +10,7 @@ import {
 import { SubTaskRepository } from 'src/repositories/subTask.repository';
 import { TaskFileRepository } from 'src/repositories/taskFile.repository';
 import { TeamRepository } from 'src/repositories/team.repository';
+import { TeamPermissionRepository } from 'src/repositories/teamPermission.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { TypeOrmExModule } from 'src/typeorm/typeorm-ex.module';
 import { ColumnService } from '../columns/column.service';
@@ -28,6 +29,7 @@ import { TeamsService } from './team.service';
       SubTaskRepository,
       TaskFileRepository,
       NotificationRepository,
+      TeamPermissionRepository,
     ]),
   ],
   providers: [

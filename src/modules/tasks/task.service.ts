@@ -8,6 +8,7 @@ import { TaskEntity } from 'src/entities/task.entity';
 import { TaskCommentEntity } from 'src/entities/taskComment.entity';
 import { TaskFileEntity } from 'src/entities/taskFile.entity';
 import { TaskHistoryEntity } from 'src/entities/taskHistory.entity';
+import { TeamHistoryEntity } from 'src/entities/teamHistory.entity';
 import { coreHelper } from 'src/helpers';
 import {
   TaskCommentRepository,
@@ -887,6 +888,7 @@ export class TaskService {
         const taskCommentRepo = transaction.getRepository(TaskCommentEntity);
         const taskFileRepo = transaction.getRepository(TaskFileEntity);
         const taskHistoryRepo = transaction.getRepository(TaskHistoryEntity);
+        const teamHistoryRepo = transaction.getRepository(TeamHistoryEntity);
         const subTaskRepo = transaction.getRepository(SubTaskEntity);
         const columnRepo = transaction.getRepository(ColumnEntity);
         const column: any = await columnRepo.findOne({
@@ -913,7 +915,7 @@ export class TaskService {
             ),
             column: {
               team: {
-                id: column.team.id,
+                id: column.__team__.id,
               },
             },
           },
@@ -1006,6 +1008,23 @@ export class TaskService {
         newTaskHistory.ownerId = user.id;
         await taskHistoryRepo.save(newTaskHistory);
         //#endregion
+
+        /// create history
+        const history = new TeamHistoryEntity();
+        history.title = 'Create new task';
+        history.description =
+          'User ' +
+          user.username +
+          ' create new task at ' +
+          moment(new Date()).format('HH:mm:ss YYYY-MM-DD');
+        history.teamId = column.__team__.id;
+        history.ownerId = user.id;
+        history.createdAt = new Date();
+        history.createdBy = user.id;
+        history.createdByName = user.username;
+        history.createdBy = user.id;
+        history.createdByName = user.username;
+        await teamHistoryRepo.save(history);
 
         //#region  log to discord
         const taskLog: TaskLogDTO = {

@@ -11,6 +11,7 @@ import { MobileModule } from './modules/mobile/mobile.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { TaskModule } from './modules/tasks/task.module';
 import { TeamModule } from './modules/teams/team.module';
+import { UserModule } from './modules/user/user.module';
 import { WebHookModule } from './modules/webhook/webhook.module';
 import { SocketModule } from './socket/socket.module';
 
@@ -28,6 +29,7 @@ import { SocketModule } from './socket/socket.module';
     MailModule,
     NotificationModule,
     MobileModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],

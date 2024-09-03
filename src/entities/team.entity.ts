@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { BaseEntityCustom } from './base.entity';
 import { ColumnEntity } from './column.entity';
+import { TeamHistoryEntity } from './teamHistory.entity';
 import { TeamPermissionEntity } from './teamPermission.entity';
 import { UserEntity } from './user.entity';
 
@@ -48,4 +49,7 @@ export class TeamEntity extends BaseEntityCustom {
 
   @OneToMany(() => TeamPermissionEntity, (permission) => permission.team)
   permission: Promise<TeamPermissionEntity[]>;
+
+  @OneToMany(() => TeamHistoryEntity, (his) => his.team)
+  history: Promise<TeamHistoryEntity[]>;
 }

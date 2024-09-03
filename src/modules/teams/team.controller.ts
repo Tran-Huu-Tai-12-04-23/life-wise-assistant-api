@@ -24,6 +24,7 @@ import {
   RemoveUserTeamDTO,
   TeamDTO,
   TeamInviteDTO,
+  TeamPermissionUpdateDTO,
 } from './dto';
 import { TeamsService } from './team.service';
 
@@ -33,6 +34,46 @@ import { TeamsService } from './team.service';
 @Controller('team')
 export class TeamController {
   constructor(private readonly service: TeamsService) {}
+
+  // #region team permission
+  @ApiOperation({
+    summary: 'Update team permission of user',
+  })
+  @ApiResponse({ status: 201, type: TeamEntity })
+  @Put('permission')
+  async updateTeamPermission(
+    @Body() body: TeamPermissionUpdateDTO,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return await this.service.updateTeamPermission(body, user);
+  }
+
+  @ApiOperation({
+    summary: 'Load user team permission',
+  })
+  @ApiResponse({ status: 201, type: TeamEntity })
+  @Get('permission/:teamId/:userId')
+  async loadUserTeamPermission(
+    @Param('teamId') teamId: string,
+    @Param('userId') userId: string,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return await this.service.loadUserTeamPermission(teamId, userId, user);
+  }
+  // #endregion
+
+  @ApiOperation({
+    summary: 'Invited multi user',
+  })
+  @ApiResponse({ status: 201, type: TeamEntity })
+  @Post('history-pagination/:teamId')
+  async paginationForTeamHistory(
+    @Body() data: PaginationDTO,
+    @CurrentUser() user: UserEntity,
+    @Param('teamId') teamId: string,
+  ) {
+    return await this.service.paginationForTeamHistory(data, teamId, user);
+  }
 
   @ApiOperation({
     summary: 'Invited multi user',

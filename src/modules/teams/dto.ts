@@ -7,6 +7,42 @@ import {
   IsString,
 } from 'class-validator';
 
+export class TeamPermissionUpdateDTO {
+  @ApiProperty({ description: 'Team permission ID' })
+  @IsNotEmpty()
+  @IsString()
+  id: string;
+
+  @ApiProperty({ description: 'Is Admin' })
+  @IsOptional()
+  @IsBoolean()
+  isAdmin: boolean;
+
+  @ApiProperty({ description: 'Is Edit' })
+  @IsOptional()
+  @IsBoolean()
+  isEdit: boolean;
+
+  @ApiProperty({ description: 'Is delete' })
+  @IsOptional()
+  @IsBoolean()
+  isDelete: boolean;
+
+  @ApiProperty({ description: 'Is create' })
+  @IsOptional()
+  @IsBoolean()
+  isCreate: boolean;
+
+  @ApiProperty({ description: 'Is assign' })
+  @IsOptional()
+  @IsBoolean()
+  isAssign: boolean;
+
+  @ApiProperty({ description: 'Is inviyte' })
+  @IsOptional()
+  @IsBoolean()
+  isInvite: boolean;
+}
 export class TeamInviteDTO {
   @ApiProperty({ description: 'Team ID' })
   @IsNotEmpty()
